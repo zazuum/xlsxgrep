@@ -52,7 +52,7 @@ optional arguments:
  ### Windows binary download
  
  https://github.com/zazuum/pool/blob/master/xlsxgrep-compiled-exe/xlsxgrep.exe
-`` 
+```
 MD5SUM 95f396801e663077f6061336340ec857 xlsxgrep.exe
 
 SHA1SUM 67293471496dda6629a6eeeb922fd65c74d15fe5 xlsxgrep.exe
