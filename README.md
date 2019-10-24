@@ -1,6 +1,6 @@
 ## Owerview
 
-*xlsxgrep* is a tool to search text in XLSX and XLS files. It works similary to *grep* or *pdfgrep*.
+*xlsxgrep* is a tool to search text in XLSX and XLS files. It works similary to *grep*.
 
 
 This is a very early development version. While it technically works, much work needs to be done to better
@@ -49,12 +49,14 @@ optional arguments:
  pip install xlsxgrep
  ```
  
+ ### Windows binary download
+ 
+ https://github.com/zazuum/pool/blob/master/xlsxgrep-compiled-exe/xlsxgrep.exe
 
 
 ## TODO
 
-- Rewrite whole thing from the scratch. :-D  
+- Rewrite the whole thing from the scratch. :-D  
 - Add new options.
-- Replace lxrd library with pandas.
 
 
