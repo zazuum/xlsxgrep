@@ -7,6 +7,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
+
 def main():
 
     parser = argparse.ArgumentParser()
@@ -30,12 +31,15 @@ def main():
                         required=False, action="store_true")
     parser.add_argument("-r", '--recursive', help="Search directories recursively.",
                         required=False, action="store_true")
+    parser.add_argument('-sep', "--separator",
+                        help="Define custom list separator in output, default is TAB", 
+                        required=False, default="\t", type=str)
     args = parser.parse_args()
 
 
-    ######  bunch of variables #####
+    ###### a bunch of variables #####
 
-    pathList = []
+    
     fList = []
     query = args.pattern
     pythonRegexp = args.python_regex
@@ -47,6 +51,7 @@ def main():
     filename = args.with_filename
     recursive = args.recursive
     matchFILES = []
+    delimiter = args.separator
     
 
 
@@ -62,6 +67,7 @@ def main():
 
 
     checkPythonRegex()
+
 
 
     def locationPath():
@@ -110,22 +116,25 @@ def main():
             return print("...Some Error Occured...(optional arguments!?)")
 
 
+
     def showFileNameAndSheet(file, active_sheet, linesArray):
         if count == True:
             pass
 
         elif filename == True:
             if showFileAndSheetName == True:
-                return print(file + ": " + active_sheet.name + ': ' + ' '.join(map(str, linesArray)))
+                return print(file + ": " + active_sheet.name + ': ' + str(delimiter) + str(delimiter).join(map(str, linesArray)))
 
             elif showFileAndSheetName == False:
-                return print(file + ": " + ' '.join(map(str, linesArray)))
+                return print(file + ": " + str(delimiter) + str(delimiter).join(map(str, linesArray)))
 
         elif filename == False:
             if showFileAndSheetName == True:
-                return print(active_sheet.name + ': ' + ' '.join(map(str, linesArray)))
+                return print(active_sheet.name + ': ' + str(delimiter) + str(delimiter).join(map(str, linesArray)))
+             
             else:
-                print(*linesArray, sep=' ')
+                print(*linesArray, sep=delimiter)
+
 
 
     def iterate(book, file):
@@ -174,6 +183,7 @@ def main():
 
 
     locationPath()
+
 
 
 

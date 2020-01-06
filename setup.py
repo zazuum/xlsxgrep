@@ -8,7 +8,7 @@ def readme():
 
 setup(
     name="xlsxgrep",
-    version="0.0.2",
+    version="0.0.21",
     description="CLI tool to search text in XLSX and XLS files. It works similary to grep",
     long_description=readme(),
     long_description_content_type="text/markdown",
