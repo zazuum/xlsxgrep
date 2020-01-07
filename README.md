@@ -52,9 +52,9 @@ optional arguments:
  
 ## Windows compiled download
 
-```
 [https://github.com/zazuum/pool/blob/master/xlsxgrep-compiled-exe/xlsxgrep.exe]: https://github.com/zazuum/pool/blob/master/xlsxgrep-compiled-exe/xlsxgrep.exe
 
+```
 MD5 hash of .\xlsxgrep.exe:
 274d9d9aafdb7ad97d10bab1a873ab4c
 
