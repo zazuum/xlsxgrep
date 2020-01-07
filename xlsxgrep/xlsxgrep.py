@@ -11,16 +11,17 @@ from pathlib import Path
 def main():
 
     parser = argparse.ArgumentParser()
+
     parser.add_argument('pattern', help="Use PATTERN as the pattern to search for.",
                         type=str)
-    parser.add_argument('path', help="File or folder location",
+    parser.add_argument('path', help="file or folder location",
                         nargs="+", action="append")
     parser.add_argument("-i", '--ignore-case', help="Ignore case distinctions.",
                         required=False, action="store_true")
     parser.add_argument("-P", '--python-regex',
-                        help="PATTERN is a Python regular expression", required=False,
+                        help="PATTERN is a Python regular expression.", required=False,
                         action="store_true")
-    parser.add_argument("-w", '--word-regexp', help="Force PATTERN to match only whole words",
+    parser.add_argument("-w", '--word-regexp', help="Force PATTERN to match only whole words.",
                         required=False, action="store_true")
     parser.add_argument("-H", '--with-filename',
                         help="Print the file name for each match.", required=False,
@@ -31,15 +32,18 @@ def main():
                         required=False, action="store_true")
     parser.add_argument("-r", '--recursive', help="Search directories recursively.",
                         required=False, action="store_true")
+    parser.add_argument("-V", '--version', help="Display version information and exit.", 
+                        action='version', version="xlsxgrep  0.0.22")
     parser.add_argument('-sep', "--separator",
-                        help="Define custom list separator in output, default is TAB", 
+                        help="Define custom list separator for output, default is TAB", 
                         required=False, default="\t", type=str)
+    
     args = parser.parse_args()
+
 
 
     ###### a bunch of variables #####
 
-    
     fList = []
     query = args.pattern
     pythonRegexp = args.python_regex
@@ -52,7 +56,7 @@ def main():
     recursive = args.recursive
     matchFILES = []
     delimiter = args.separator
-    
+   
 
 
     def checkPythonRegex():
@@ -95,6 +99,7 @@ def main():
                 exit(0)
 
         search()
+
 
 
     def checkArgs(val):
