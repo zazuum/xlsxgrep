@@ -14,31 +14,34 @@
 
 ## Usage:
 ```
-usage: xlsxgrep [-h] [-i] [-P] [-w] [-H] [-c] [-N] [-r] [-sep SEPARATOR]
-                 pattern path [path ...]
+usage: xlsxgrep.py [-h] [-i] [-P] [-w] [-H] [-c] [-N] [-r] [-V]
+                   [-sep SEPARATOR]
+                   pattern path [path ...]
 
 positional arguments:
   pattern               Use PATTERN as the pattern to search for.
-  path                  File or folder location
+  path                  file or folder location
 
 optional arguments:
   -h, --help            show this help message and exit
   -i, --ignore-case     Ignore case distinctions.
-  -P, --python-regex    PATTERN is a Python regular expression
-  -w, --word-regexp     Force PATTERN to match only whole words
+  -P, --python-regex    PATTERN is a Python regular expression.
+  -w, --word-regexp     Force PATTERN to match only whole words.
   -H, --with-filename   Print the file name for each match.
   -c, --count           Print only a count of matches per file
   -N, --with-sheetname  Print the sheet name for each match.
   -r, --recursive       Search directories recursively.
+  -V, --version         Display version information and exit.
   -sep SEPARATOR, --separator SEPARATOR
-                        Define custom list separator in output, default is TAB
+                        Define custom list separator for output, default is
+                        TAB
 ```
 
 ## Example
 
 ```sh
      $ xlsxgrep "myPATTERN" --with-filename --with-sheetname -sep=";" Document.xlsx
-   Document.xlsx: Sheet1:   ;column1;column2;myPATTERN;pattern;column3;column4;column5;column6;column7 
+   Document.xlsx: Sheet1:   ;column1;column2;myPATTERN;column3;column4;column5;column6 
    
 ```
 ## Installation
@@ -47,16 +50,23 @@ optional arguments:
  pip install xlsxgrep
  ```
  
- ## Windows binary download
+## Windows compiled download
 
- ```
- https://github.com/zazuum/pool/blob/master/xlsxgrep-compiled-exe/xlsxgrep.exe
+```
+[https://github.com/zazuum/pool/blob/master/xlsxgrep-compiled-exe/xlsxgrep.exe](https://github.com/zazuum/pool/blob/master/xlsxgrep-compiled-exe/xlsxgrep.exe
+)
 
-MD5SUM  6c39aef500430bea608bd38fc6ba3eb8  xlsxgrep.exe
 
-SHA1SUM 7a09cf70d71e800377f4c1a3d24f88d2fe6e5bb8  xlsxgrep.exe
+MD5 hash of .\xlsxgrep.exe:
+274d9d9aafdb7ad97d10bab1a873ab4c
 
- ```
+SHA1 hash of .\xlsxgrep.exe:
+6eea9d25739c9d4bd339d4a1fc809c6bd645c6e6
+
+```
+
+
+
 
 
  
