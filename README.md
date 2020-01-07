@@ -1,6 +1,6 @@
 ## Owerview
 
-*xlsxgrep* is a command-line tool to search text in XLSX and XLS files. It works similary to Unix/Linux *grep*.
+*xlsxgrep* is a command-line tool to search text in XLSX and XLS files. It works similarly to Unix/Linux *grep*.
 
 
 ## Features
