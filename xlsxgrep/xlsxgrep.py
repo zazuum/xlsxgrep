@@ -9,40 +9,43 @@ from pathlib import Path
 
 
 def main():
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('pattern', help="Use PATTERN as the pattern to search for.",
+    
+    example_text = '''example:\n\txlsxgrep "PATTERN" -H -N -sep=";" -r /path/to/folder
+                               \n'''
+    parser = argparse.ArgumentParser(prog='xlsxgrep',
+                                 epilog=example_text,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter) 
+    parser.add_argument('pattern', help="use PATTERN as the pattern to search for.",
                         type=str)
     parser.add_argument('path', help="file or folder location",
                         nargs="+", action="append")
-    parser.add_argument("-i", '--ignore-case', help="Ignore case distinctions.",
+    parser.add_argument("-i", '--ignore-case', help="ignore case distinctions.",
                         required=False, action="store_true")
     parser.add_argument("-P", '--python-regex',
                         help="PATTERN is a Python regular expression.", required=False,
                         action="store_true")
-    parser.add_argument("-w", '--word-regexp', help="Force PATTERN to match only whole words.",
+    parser.add_argument("-w", '--word-regexp', help="force PATTERN to match only whole words.",
                         required=False, action="store_true")
     parser.add_argument("-H", '--with-filename',
-                        help="Print the file name for each match.", required=False,
+                        help="print the file name for each match.", required=False,
                         action="store_true")
-    parser.add_argument("-c", '--count', help="Print only a count of matches per file",
+    parser.add_argument("-c", '--count', help="print only a count of matches per file",
                         required=False, action="store_true")
-    parser.add_argument("-N", '--with-sheetname', help="Print the sheet name for each match.",
+    parser.add_argument("-N", '--with-sheetname', help="print the sheet name for each match.",
                         required=False, action="store_true")
-    parser.add_argument("-r", '--recursive', help="Search directories recursively.",
+    parser.add_argument("-r", '--recursive', help="search directories recursively.",
                         required=False, action="store_true")
-    parser.add_argument("-V", '--version', help="Display version information and exit.", 
-                        action='version', version="xlsxgrep  0.0.22")
+    parser.add_argument("-V", '--version', help="display version information and exit.", 
+                        action='version', version="xlsxgrep  0.0.23")
     parser.add_argument('-sep', "--separator",
-                        help="Define custom list separator for output, default is TAB", 
+                        help="define custom list separator for output, default is TAB", 
                         required=False, default="\t", type=str)
     
     args = parser.parse_args()
 
 
 
-    ###### a bunch of variables #####
+##         a bunch of variables        ##
 
     fList = []
     query = args.pattern
@@ -58,21 +61,22 @@ def main():
     delimiter = args.separator
    
 
+## Valid Python Regex Check ( Optional Argument -P, --python-regex)
 
     def checkPythonRegex():
         if pythonRegexp == True:
             try:
                 re.compile(query)
-                is_valid = True # Used for debug test 
+                is_valid = True ## Used for debug test 
                 pass
             except re.error:
-                is_valid = False # Used for debug test
-                exit("Error: Not valid Python Regular Expression")
+                is_valid = False ## Used for debug test
+                exit("Error:    Not valid Python Regular Expression")
 
 
     checkPythonRegex()
 
-
+##     Checking file or folder format and destination 
 
     def locationPath():
         for i in args.path[0]:
@@ -94,13 +98,13 @@ def main():
                             fList.append(str(child))
 
             elif (Path(i).is_file() and str(Path(i)).endswith(('.xlsx', '.xls', '.XSLX', '.XLS'))) == False:
-                # perform file check
-                print("--> Error. Unsupported format, or corrupt file: ", Path(i))
-                exit(0)
+                ## perform file check
+                print("Error:   Unsupported file format: ", Path(i))
+                #exit(0)
 
         search()
 
-
+## Checking pattern optional arguments ("-P", '--python-regex', "-w", '--word-regexp')
 
     def checkArgs(val):
         if pythonRegexp == True:
@@ -121,6 +125,7 @@ def main():
             return print("...Some Error Occured...(optional arguments!?)")
 
 
+## Checking output optional arguments ("-H", '--with-filename', "-N", '--with-sheetname')
 
     def showFileNameAndSheet(file, active_sheet, linesArray):
         if count == True:
@@ -141,8 +146,9 @@ def main():
                 print(*linesArray, sep=delimiter)
 
 
+## Iterate over rows and columns and append matches to array
 
-    def iterate(book, file):
+    def iterateOverCells(book, file):
         for eachSheet in range(0, len(book.sheet_names())):
             active_sheet = book.sheet_by_index(eachSheet)
 
@@ -167,24 +173,27 @@ def main():
                     else:
                         pass
 
+## Opening files, start searching 
 
     def search():
-        try:
-            for file in fList:
+
+        for file in fList:
+            try:
                 book = xlrd.open_workbook(file)
-                iterate(book, file)
+                iterateOverCells(book, file)
+            except:
+                print("Error:    Unsupported format, password protected or corrupted file: ", file)
+        
+        if count == True:
+            print("Total matches: ", len(countMatches))
 
-            if count == True:
-                print("Total matches: ", len(countMatches))
+            if showFileAndSheetName or filename == True:
+                for x in Counter(matchFILES):
+                    d = Counter(matchFILES)
+                    print(str(x) + ": " + str(d[x]))
+            else:
+                pass
 
-                if showFileAndSheetName or filename == True:
-                    for x in Counter(matchFILES):
-                        d = Counter(matchFILES)
-                        print(str(x) + ": " + str(d[x]))
-                else:
-                    pass
-        except:
-            print("Error. Unsupported format, or corrupt file: ", file)
 
 
     locationPath()

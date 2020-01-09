@@ -8,8 +8,8 @@ def readme():
 
 setup(
     name="xlsxgrep",
-    version="0.0.22",
-    description="CLI tool to search text in XLSX and XLS files. It works similary to grep",
+    version="0.0.23",
+    description="CLI tool to search text in XLSX and XLS files. It works similarly to Unix\GNU Linux grep",
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/zazuum/xlsxgrep",
@@ -18,10 +18,9 @@ setup(
     license="MIT",
     classifiers=[
         "License :: OSI Approved :: MIT License",
-        "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
-	"Intended Audience :: Education",
-	"Intended Audience :: End Users/Desktop",
+	    "Intended Audience :: Education",
+	    "Intended Audience :: End Users/Desktop",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
     ],
