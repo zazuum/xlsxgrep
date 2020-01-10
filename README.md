@@ -47,12 +47,22 @@ optional arguments:
 ```
 ## Installation
 
+```sh
+
+     pip install xlsxgrep
+  
 ```
 
- pip install xlsxgrep
- 
- ```
+## Windows compiled exe download
 
+```sh
+
+     https://github.com/zazuum/pool/tree/master/xlsxgrep-compiled-exe
+     
+     MD5 hash of .\xlsxgrep.exe: b2e56a383238c3ab7479741bfb3e0a15
+     SHA1 hash of .\xlsxgrep.exe: e94ed724f18bc5311b41e0f89d66a2cef239e4f4
+  
+```
  
  
 
