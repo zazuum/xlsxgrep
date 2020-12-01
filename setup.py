@@ -26,7 +26,7 @@ setup(
     ],
     packages=["xlsxgrep"],
     include_package_data=True,
-    install_requires=["xlrd"],
+    install_requires=["pyexcel-xls", "pyexcel-xlsx", "pyexcel-ods3", "pyexcel-ods"],
     entry_points={
         "console_scripts": [
             "xlsxgrep=xlsxgrep.xlsxgrep:main",

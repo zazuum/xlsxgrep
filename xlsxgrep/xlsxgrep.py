@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import xlrd
+import pyexcel as p
 import re
 from collections import Counter
 from pathlib import Path
@@ -79,25 +79,26 @@ def main():
 ##     Checking file or folder format and destination 
 
     def locationPath():
+        fileTypes = ('.xlsx', '.xls', '.XSLX', '.XLS', '.ods', '.ODS')
         for i in args.path[0]:
 
             if (Path(i).is_file() is False) and (Path(i).is_dir() is False):
                 exit(str(i) + " File or folder not found. ")
 
-            elif (Path(i).is_file() and str(Path(i)).endswith(('.xlsx', '.xls', '.XSLX', '.XLS'))):
+            elif (Path(i).is_file() and str(Path(i)).endswith(fileTypes)):
                 fList.append(str(Path(i)))
 
             elif Path(i).is_dir():
                 if recursive == True:
                     for child in Path(i).rglob("*"):
-                        if (str(child).endswith(('.xlsx', '.xls', '.XSLX', '.XLS'))):
+                        if (str(child).endswith(fileTypes)):
                             fList.append(str(child))
                 else:
                     for child in Path(i).iterdir():
-                        if (str(child).endswith(('.xlsx', '.xls', '.XSLX', '.XLS'))):
+                        if (str(child).endswith(fileTypes)):
                             fList.append(str(child))
 
-            elif (Path(i).is_file() and str(Path(i)).endswith(('.xlsx', '.xls', '.XSLX', '.XLS'))) == False:
+            elif (Path(i).is_file() and str(Path(i)).endswith(fileTypes)) == False:
                 ## perform file check
                 print("Error:   Unsupported file format: ", Path(i))
                 #exit(0)
@@ -133,14 +134,14 @@ def main():
 
         elif filename == True:
             if showFileAndSheetName == True:
-                return print(file + ": " + active_sheet.name + ': ' + str(delimiter) + str(delimiter).join(map(str, linesArray)))
+                return print(file + ": " + active_sheet + ': ' + str(delimiter) + str(delimiter).join(map(str, linesArray)))
 
             elif showFileAndSheetName == False:
                 return print(file + ": " + str(delimiter) + str(delimiter).join(map(str, linesArray)))
 
         elif filename == False:
             if showFileAndSheetName == True:
-                return print(active_sheet.name + ': ' + str(delimiter) + str(delimiter).join(map(str, linesArray)))
+                return print(active_sheet + ': ' + str(delimiter) + str(delimiter).join(map(str, linesArray)))
              
             else:
                 print(*linesArray, sep=delimiter)
@@ -149,29 +150,13 @@ def main():
 ## Iterate over rows and columns and append matches to array
 
     def iterateOverCells(book, file):
-        for eachSheet in range(0, len(book.sheet_names())):
-            active_sheet = book.sheet_by_index(eachSheet)
-
-            for i in range(0, active_sheet.nrows):
-                cells = active_sheet.row_slice(
-                    rowx=i, start_colx=0, end_colx=active_sheet.nrows)
-
-                for cell in cells:
-                    if checkArgs(cell.value):
-                        countMatches.append(str(cell.value))
-
-                        for col in range(0, active_sheet.ncols):
-                            mLine = active_sheet.row_slice(
-                                rowx=i, start_colx=0, end_colx=active_sheet.ncols)
-                            linesArray = []
-
-                            for col in mLine:
-                                linesArray.append(col.value)
+        for key, item in book.items():
+            for line in item:
+                for cell in line:
+                    if checkArgs(cell):
+                        countMatches.append(cell)
                         matchFILES.append(file)
-                        showFileNameAndSheet(file, active_sheet, linesArray)
-
-                    else:
-                        pass
+                        showFileNameAndSheet(file, key, line)
 
 ## Opening files, start searching 
 
@@ -179,7 +164,7 @@ def main():
 
         for file in fList:
             try:
-                book = xlrd.open_workbook(file)
+                book =  p.get_book_dict(file_name=file)
                 iterateOverCells(book, file)
             except:
                 print("Error:    Unsupported format, password protected or corrupted file: ", file)
