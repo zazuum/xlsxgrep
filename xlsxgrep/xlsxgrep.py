@@ -36,7 +36,7 @@ def main():
     parser.add_argument("-r", '--recursive', help="search directories recursively.",
                         required=False, action="store_true")
     parser.add_argument("-V", '--version', help="display version information and exit.", 
-                        action='version', version="xlsxgrep  0.0.23")
+                        action='version', version="xlsxgrep  0.0.24")
     parser.add_argument('-sep', "--separator",
                         help="define custom list separator for output, default is TAB", 
                         required=False, default="\t", type=str)
@@ -59,6 +59,7 @@ def main():
     recursive = args.recursive
     matchFILES = []
     delimiter = args.separator
+    strMatches = []
    
 
 ## Valid Python Regex Check ( Optional Argument -P, --python-regex)
@@ -152,13 +153,18 @@ def main():
     def iterateOverCells(book, file):
         for key, item in book.items():
             for line in item:
+                AuxFlag = False
                 for cell in line:
                     if checkArgs(cell):
+                        AuxFlag = True
                         countMatches.append(cell)
+                        [strMatches.append(cell) for x in re.findall(str(query.upper()), str(cell).upper()) ]
+                if AuxFlag == True:
                         matchFILES.append(file)
                         showFileNameAndSheet(file, key, line)
 
 ## Opening files, start searching 
+
 
     def search():
 
@@ -170,12 +176,12 @@ def main():
                 print("Error:    Unsupported format, password protected or corrupted file: ", file)
         
         if count == True:
-            print("Total matches: ", len(countMatches))
+            print("Total matches: ", len(countMatches),"Cells, ", len(strMatches),"Strings")
 
             if showFileAndSheetName or filename == True:
                 for x in Counter(matchFILES):
                     d = Counter(matchFILES)
-                    print(str(x) + ": " + str(d[x]))
+                    print(str(x) + ": " + str(d[x]) +" Rows" )
             else:
                 pass
 
