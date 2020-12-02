@@ -8,8 +8,8 @@ def readme():
 
 setup(
     name="xlsxgrep",
-    version="0.0.23",
-    description="CLI tool to search text in XLSX and XLS files. It works similarly to Unix\GNU Linux grep",
+    version="0.0.24",
+    description="CLI tool to search text in XLSX, XLS and ODS files. It works similarly to Unix\GNU Linux grep",
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/zazuum/xlsxgrep",
@@ -23,10 +23,12 @@ setup(
 	    "Intended Audience :: End Users/Desktop",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     packages=["xlsxgrep"],
     include_package_data=True,
-    install_requires=["pyexcel-xls", "pyexcel-xlsx", "pyexcel-ods3", "pyexcel-ods"],
+    install_requires=["pyexcel","pyexcel-xls", "pyexcel-xlsx", "pyexcel-ods3", "pyexcel-ods"],
     entry_points={
         "console_scripts": [
             "xlsxgrep=xlsxgrep.xlsxgrep:main",
