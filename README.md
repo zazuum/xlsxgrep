@@ -2,19 +2,18 @@
 
 *xlsxgrep* is a CLI tool to search text in XLSX, XLS and ODS files. It works similarly to Unix/GNU Linux *grep*.
 
-
 ## Features
 
 - Grep compatible: xlsxgrep tries to be compatible with Unix/Linux grep,
-    where it makes sense. Some of grep options are supported (such as `-r`, `-i`  or `-c`).
+  where it makes sense. Some of grep options are supported (such as `-r`, `-i`  or `-c`).
 
 - Search many XLSX, XLS and ODS files at once, even recursively in directories.
 
 - Regular expressions: Python regex.
 
 ## Usage:
-```
 
+```sh
 usage: xlsxgrep [-h] [-i] [-P] [-w] [-H] [-c] [-N] [-r] [-V] [-sep SEPARATOR]
                 pattern path [path ...]
 
@@ -34,30 +33,23 @@ optional arguments:
   -V, --version         display version information and exit.
   -sep SEPARATOR, --separator SEPARATOR
                         define custom list separator for output, default is
-                        TAB
-        
+                        TAB       
 ```
 
 ## Example:
 
 ```sh
-
-     xlsxgrep "PATTERN" -H -N --sep=";" -r /path/to/file_or_folder
-  
+xlsxgrep "PATTERN" -H -N --sep=";" -r /path/to/file_or_folder
 ```
+
 ## Installation
 
 ```sh
-
-     pip install xlsxgrep
-  
+pip install xlsxgrep
 ```
 
 ## Windows compiled download:
 
 ```sh
-
-     https://github.com/zazuum/pool/tree/master/xlsxgrep-compiled-exe
-  
+https://github.com/zazuum/pool/tree/master/xlsxgrep-compiled-exe
 ```
- 
