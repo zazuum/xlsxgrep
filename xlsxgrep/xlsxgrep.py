@@ -3,8 +3,9 @@
 
 import sys
 import argparse
-import pyexcel as p
 import re
+import warnings
+import pyexcel as p
 from collections import Counter
 from pathlib import Path
 
@@ -19,7 +20,7 @@ def main():
     parser.add_argument('pattern', help="use PATTERN as the pattern to search for.",
                         type=str)
     parser.add_argument("-V", '--version', help="display version information and exit.",
-                        action='version', version="xlsxgrep  0.0.25")
+                        action='version', version="xlsxgrep  0.0.26")
     parser.add_argument('path', help="file or folder location",
                         nargs="+", action="append")
     parser.add_argument("-i", '--ignore-case', help="ignore case distinctions.",
@@ -54,7 +55,7 @@ def main():
     args = parser.parse_args()
 
 ##         a bunch of variables        ##
-
+    # CLI Arguments
     query = args.pattern
     pythonRegexp = args.python_regex
     wordRegexp = args.word_regexp
@@ -66,11 +67,14 @@ def main():
     files_with_match = args.files_with_match
     files_without_match = args.files_without_match
     showFileAndSheetName = args.with_sheetname
+    # Arrays
     countMatches = []
     matchFILES = []
     NONmatchFILES = []
     strMatches = []
     fList = []
+    # Supress unsupported file extensions warnings
+    Warnings = warnings.filterwarnings("ignore", category=UserWarning ) 
 
 
 # Valid Python Regex Check ( Optional Argument -P, --python-regex)
@@ -184,16 +188,20 @@ def main():
 # Opening files, start searching
 
     def search():
-
         for file in fList:
             try:
                 book = p.get_book_dict(file_name=file)
                 iterateOverCells(book, file)
-
+            
+            except KeyboardInterrupt:
+                # print('KeyboardInterrupt exception is caught')
+                sys.exit(0)
+            
             except:
-                print(
-                    f"Error:    Unsupported format, password protected or corrupted file: {file}", file=sys.stderr)
-
+                print(f"Error:\tUnsupported format, password protected or corrupted file: {file}", file=sys.stderr)
+                pass
+            
+                   
         if count == True:
             print("Total matches: ", len(countMatches),
                   "Cells, ", len(strMatches), "Strings")
