@@ -1,17 +1,17 @@
 ## Owerview
 
-*xlsxgrep* is a CLI tool to search text in XLSX, XLS, CSV and ODS files. It works similarly to Unix/GNU Linux *grep*.
+*xlsxgrep* is a CLI tool to search text in XLSX, XLS, CSV, TSV and ODS files. It works similarly to Unix/GNU Linux *grep*.
 
 ## Features
 
 - Grep compatible: xlsxgrep tries to be compatible with Unix/Linux grep, where it makes sense. 
   Some of grep options are supported (such as `-r`, `-i`  or `-c`).
 
-- Search many XLSX, XLS, CSV and ODS files at once, even recursively in directories.
+- Search many XLSX, XLS, CSV, TSV and ODS files at once, even recursively in directories.
 
 - Regular expressions: Python regex.
 
-- Supported file types: csv, ods, xls, xlsx 
+- Supported file types: csv, ods, tsv, xls, xlsx 
 
 ## Usage:
 ```
