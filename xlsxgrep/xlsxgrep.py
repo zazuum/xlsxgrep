@@ -9,7 +9,7 @@ import pyexcel as p
 from collections import Counter
 from pathlib import Path
 
-__version__ = '0.0.27'
+__version__ = '0.0.28'
 
 
 def main():
@@ -75,14 +75,14 @@ def main():
     ShowFileAndSheetName = args.with_sheetname
     ## Arrays
     CountMatchesArr, FilesWithMatch, FilesWithoutMatch, StrMatches, File_List = [ ],[ ] ,[ ],[ ],[ ]
-    
+
 
     # - Supress unsupported file extensions warnings.
-    #   'UserWarning: Data Validation extension is not supported and will be removed'. (module=openpyxl) 
-    #   'UserWarning: Unknown extension is not supported and will be removed'.         (module=openpyxl)            
+    #   'UserWarning: Data Validation extension is not supported and will be removed'. (module=openpyxl)
+    #   'UserWarning: Unknown extension is not supported and will be removed'.         (module=openpyxl)
     warnings.filterwarnings("ignore", category=UserWarning, message="Unknown extension is not supported and will be removed")
     warnings.filterwarnings("ignore", category=UserWarning, message='Data Validation extension is not supported and will be removed')
-    # - Ignore deprecated python regex warnings. 
+    # - Ignore deprecated python regex warnings.
     #   'DeprecationWarning: Flags not at the start of the expression 'foo|(?i)bar'.   (module=re)
     warnings.filterwarnings("ignore", category=DeprecationWarning,message='.*Flags not at the start of the expression*.')
 
@@ -97,7 +97,7 @@ def main():
             else:
                 PythonRegex = False
                 return args.python_regex
-            
+
         else:
             try:
                 args.python_regex = True
@@ -113,7 +113,8 @@ def main():
 # Checking file or folder format and destination
 
     def File_And_Path_Location():
-        fileTypes = ('.xls', '.XLS','.xlsx', '.XLSX', '.ods', '.ODS', '.csv', '.CSV')
+        fileTypes = ('.xls', '.XLS','.xlsx', '.XLSX', '.ods', '.ODS',
+                     '.csv', '.CSV', '.tsv', '.TSV')
         for i in args.path[0]:
 
             if (Path(i).is_file() is False) and (Path(i).is_dir() is False):
@@ -196,12 +197,12 @@ def main():
                     if Check_Optional_Args(cell):
                         AuxFlag = True
                         CountMatchesArr.append(cell)
-                        reESCapedQuery = re.escape( str(Query).upper() ) 
+                        reESCapedQuery = re.escape( str(Query).upper() )
                         STRcell = str(cell).upper()
                         if args.python_regex == False:
                             [StrMatches.append(cell) for x in re.findall(reESCapedQuery , STRcell)]
                         else:
-                            [StrMatches.append(cell) for x in re.findall(str(Query), str(cell))] 
+                            [StrMatches.append(cell) for x in re.findall(str(Query), str(cell))]
 
                 if AuxFlag == True:
                     FilesWithMatch.append(file)
@@ -218,7 +219,7 @@ def main():
                     print(str(x) + ": " + str(d[x]) + " Rows")
             else:
                 pass
-            
+
             ROWS, CELLS, STRINGS = len(FilesWithMatch) , len(CountMatchesArr) ,len(StrMatches)
             return print("Search results: ", ROWS , "Rows, ",CELLS, "Cells, ", STRINGS, "Strings"  )
 
@@ -229,16 +230,16 @@ def main():
             try:
                 book = p.get_book_dict(file_name=file)
                 Iterate_Over_Cells(book, file)
-            
+
             except KeyboardInterrupt:
                 # print('KeyboardInterrupt exception is caught')
                 sys.exit(0)
-            
+
             except:
                 print(f"Error:\tUnsupported format, password protected or corrupted file: {file}", file=sys.stderr)
                 pass
-            
-                              
+
+
         if Count == True:
             Count_Matches()
 
