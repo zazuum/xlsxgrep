@@ -5,11 +5,11 @@ import sys
 import argparse
 import re
 import warnings
+import logging
 import pyexcel as p
-from collections import Counter
 from pathlib import Path
 
-__version__ = '0.0.28'
+__version__ = '0.0.29'
 
 
 def main():
@@ -48,9 +48,11 @@ def main():
                         required=False, action="store_true")
     parser.add_argument("-L", '--files-without-match', help="print only names of FILEs with no match pattern.",
                         required=False, action="store_true")
-    parser.add_argument('-sep', "--separator",
+    parser.add_argument('-S', "--separator",
                         help="define custom list separator for output, the default is TAB",
                         required=False, default="\t", type=str)
+    parser.add_argument("-Z", '--null', help="output a zero byte (the ASCII NUL character) instead of the usual newline.",
+                        required=False, action="store_true")
 
     if len(sys.argv) == 1:
         parser.print_usage(sys.stderr)
@@ -59,8 +61,7 @@ def main():
 
     args = parser.parse_args()
 
-##         a bunch of variables        ##
-    ## CLI Arguments
+    ### CLI Arguments ###
     Query = args.pattern
     PythonRegex = args.python_regex
     FixedString = args.fixed_strings
@@ -73,20 +74,27 @@ def main():
     Files_with_match = args.files_with_match
     Files_without_match = args.files_without_match
     ShowFileAndSheetName = args.with_sheetname
-    ## Arrays
-    CountMatchesArr, FilesWithMatch, FilesWithoutMatch, StrMatches, File_List = [ ],[ ] ,[ ],[ ],[ ]
+    ZeroByte = args.null 
+    
 
-
-    # - Supress unsupported file extensions warnings.
-    #   'UserWarning: Data Validation extension is not supported and will be removed'. (module=openpyxl)
-    #   'UserWarning: Unknown extension is not supported and will be removed'.         (module=openpyxl)
-    warnings.filterwarnings("ignore", category=UserWarning, message="Unknown extension is not supported and will be removed")
-    warnings.filterwarnings("ignore", category=UserWarning, message='Data Validation extension is not supported and will be removed')
-    # - Ignore deprecated python regex warnings.
-    #   'DeprecationWarning: Flags not at the start of the expression 'foo|(?i)bar'.   (module=re)
-    warnings.filterwarnings("ignore", category=DeprecationWarning,message='.*Flags not at the start of the expression*.')
-
-
+    def DisableWarningsAndLoggings():
+        ## - Supress unsupported file extensions warnings.
+        ##   'UserWarning: Data Validation extension is not supported and will be removed'. (module=openpyxl)
+        ##   'UserWarning: Unknown extension is not supported and will be removed'.         (module=openpyxl)
+        warnings.filterwarnings("ignore", category=UserWarning, message="Unknown extension is not supported and will be removed")
+        warnings.filterwarnings("ignore", category=UserWarning, message='Data Validation extension is not supported and will be removed')
+        ## - Ignore deprecated python regex warnings.
+        ##   'DeprecationWarning: Flags not at the start of the expression 'foo|(?i)bar'.   (module=re)
+        warnings.filterwarnings("ignore", category=DeprecationWarning,message='.*Flags not at the start of the expression*.')
+        ## - Supress Conditional Formatting extension not supported and Cannot parse header or footer warning.
+        warnings.filterwarnings("ignore", category=UserWarning,message='Conditional Formatting extension is not supported and will be removed')
+        warnings.filterwarnings("ignore", category=UserWarning, message="Cannot parse header or footer so it will be ignored")
+        ## - Disable all warnings in openpyxl
+        #warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
+        ## - Disable all logging warnings
+        logging.disable(logging.WARNING)
+        
+    DisableWarningsAndLoggings()
 
 # Valid Python Regex Check ( Optional Argument -P, --python-regex)
 
@@ -95,7 +103,7 @@ def main():
             if args.python_regex == True:
                 sys.exit("xlsxgrep: --python-regex cannot be used together with: -F, -w or -i")
             else:
-                PythonRegex = False
+                args.python_regex = False
                 return args.python_regex
 
         else:
@@ -113,10 +121,11 @@ def main():
 # Checking file or folder format and destination
 
     def File_And_Path_Location():
+        File_List = [ ]
         fileTypes = ('.xls', '.XLS','.xlsx', '.XLSX', '.ods', '.ODS',
                      '.csv', '.CSV', '.tsv', '.TSV')
         for i in args.path[0]:
-
+            
             if (Path(i).is_file() is False) and (Path(i).is_dir() is False):
                 exit(str(i) + " File or folder not found. ")
 
@@ -137,12 +146,13 @@ def main():
                 # perform file check
                 print("Error:   Unsupported file format: ",
                       Path(i), file=sys.stderr)
-
-        SEARCH()
+        
+        SEARCH(File_List)
 
 # Checking pattern optional arguments ("-P", '--python-regex', "-w", '--word-regexp')
 
     def Check_Optional_Args(val):
+        
         if args.python_regex == True:
             return re.search(r'%s' % Query, str(val))
 
@@ -163,6 +173,10 @@ def main():
 # Checking output optional arguments ("-H", '--with-filename', "-N", '--with-sheetname')
 
     def Show_Filename_And_Sheetname(file, active_sheet, linesArray):
+        ENDSWITH="\n" 
+        if ZeroByte:
+            ENDSWITH =""
+
         if Count == True:
             pass
 
@@ -174,65 +188,108 @@ def main():
 
         elif Filename == True:
             if ShowFileAndSheetName == True:
-                return print(file + ": " + active_sheet + ': ' + Delimiter + Delimiter.join(map(str, linesArray)))
+                return print(file + ": " + active_sheet + ': ' + Delimiter + Delimiter.join(map(str, linesArray)),end=ENDSWITH)
 
             elif ShowFileAndSheetName == False:
-                return print(file + ": " + Delimiter + Delimiter.join(map(str, linesArray)))
+                return print(file + ": " + Delimiter + Delimiter.join(map(str, linesArray)),end=ENDSWITH)
 
         elif Filename == False:
             if ShowFileAndSheetName == True:
-                return print(active_sheet + ': ' + Delimiter + Delimiter.join(map(str, linesArray)))
+                return print(active_sheet + ': ' + Delimiter + Delimiter.join(map(str, linesArray)),end=ENDSWITH)
 
             else:
-                print(*linesArray, sep=Delimiter)
+                print(*linesArray, sep=Delimiter,end=ENDSWITH)
 
-# Iterate over rows and columns and append matches to array
 
+# Iterate over rows and columns and append matches count to array.
+ 
+    SumOfROW , SumOfCELL , SumOfSTR = [] , [] , []    
     def Iterate_Over_Cells(book, file):
-        FilesWithoutMatch.append(file)
+        ROWcount, CELLcount, STRcount = [0] , [0] ,[0]
         for key, item in book.items():
-            for line in item:
+             for line in item:
                 AuxFlag = False
                 for cell in line:
-                    if Check_Optional_Args(cell):
+                 if Check_Optional_Args(cell):
+                    if Count:
                         AuxFlag = True
-                        CountMatchesArr.append(cell)
+                        CELLcount[0] = CELLcount[0] + 1
                         reESCapedQuery = re.escape( str(Query).upper() )
                         STRcell = str(cell).upper()
                         if args.python_regex == False:
-                            [StrMatches.append(cell) for x in re.findall(reESCapedQuery , STRcell)]
+                         for x in re.findall(reESCapedQuery , STRcell):
+                            STRcount[0] = STRcount[0] + 1
+                     
                         else:
-                            [StrMatches.append(cell) for x in re.findall(str(Query), str(cell))]
+                            for x in re.findall(str(Query), str(cell)):
+                                STRcount[0] = STRcount[0] + 1
+                    else:
+                        AuxFlag = True
+                        ROWcount[0] = ROWcount[0] - 1
 
                 if AuxFlag == True:
-                    FilesWithMatch.append(file)
-                    if file in FilesWithoutMatch:
-                        FilesWithoutMatch.remove(file)
+                    ROWcount[0] = ROWcount[0] + 1
+                    
                     Show_Filename_And_Sheetname(file, key, line)
+
+
+        if ROWcount[0] > 0:
+          ENDSWITH="\n"
+          ROWS, CELLS, STRINGS = ROWcount , CELLcount, STRcount
+          if args.null:
+            ENDSWITH =""
+          if ShowFileAndSheetName or Filename:
+            print(file,":",ROWS[0] , "Rows, ",CELLS[0], "Cells, ", STRINGS[0], "Strings" ,end=ENDSWITH )
+          SumOfCELL.extend(CELLcount)
+          SumOfSTR.extend(STRcount)
+          SumOfROW.extend(ROWcount)
+                        
+                   
+                
+    # Check files-with-match and files-without-match arguments
+
+    def HyphenlAndHyphenLCheck(book,file):
+        ENDSWITH="\n"
+        if args.null:
+            ENDSWITH =""
+
+        if Files_with_match:            
+            if Check_Optional_Args(book):
+                 return print(file, end=ENDSWITH)
+                
+        elif Files_without_match:
+            if not Check_Optional_Args(book):
+                return print(file, end=ENDSWITH)
+        
+        else:
+    
+            Iterate_Over_Cells(book,file)
+
 
 # Count matches. Rows, cells and strings.
 
-    def Count_Matches():
-            if ShowFileAndSheetName or Filename == True:
-                for x in Counter(FilesWithMatch):
-                    d = Counter(FilesWithMatch)
-                    print(str(x) + ": " + str(d[x]) + " Rows")
-            else:
-                pass
-
-            ROWS, CELLS, STRINGS = len(FilesWithMatch) , len(CountMatchesArr) ,len(StrMatches)
-            return print("Search results: ", ROWS , "Rows, ",CELLS, "Cells, ", STRINGS, "Strings"  )
+    def SumOfRowsCellsAndStrings():
+         ROWS, CELLS, STRINGS = sum(SumOfROW) , sum(SumOfCELL), sum(SumOfSTR)
+         print("Search results: ", ROWS , "Rows, ",CELLS, "Cells, ", STRINGS, "Strings"  )
+             
 
 # Opening files, start searching
 
-    def SEARCH():
+    def SEARCH(File_List):
         for file in File_List:
             try:
-                book = p.get_book_dict(file_name=file)
-                Iterate_Over_Cells(book, file)
+                if file.endswith((".xlsx",".XLSX")):
+                    book = p.get_book_dict(file_name=file, skip_hidden_row_and_column=False)
+                
+                else:
+                    book = p.get_book_dict(file_name=file,)
+
+                
+                HyphenlAndHyphenLCheck(book, file)
+
 
             except KeyboardInterrupt:
-                # print('KeyboardInterrupt exception is caught')
+            
                 sys.exit(0)
 
             except:
@@ -240,21 +297,16 @@ def main():
                 pass
 
 
-        if Count == True:
-            Count_Matches()
-
-        elif Files_with_match:
-            MYset = list(set(FilesWithMatch))
-            MYset.sort()
-            return [print(fx) for fx in MYset]
-
-        elif Files_without_match:
-            MYset = list(set(FilesWithoutMatch))
-            MYset.sort()
-            return [print(fx) for fx in MYset]
+        if Count:
+            if Files_with_match or Files_without_match:
+                pass
+            
+            else:
+                SumOfRowsCellsAndStrings()
 
     File_And_Path_Location()
 
 
 if __name__ == "__main__":
     main()
+
