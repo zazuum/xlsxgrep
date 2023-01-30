@@ -16,8 +16,8 @@
 ## Usage:
 ```
 
-usage: xlsxgrep [-h] [-V] [-i] [-P] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-sep SEPARATOR] 
-		pattern path [path ...]
+usage: xlsxgrep [-h] [-V] [-P] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR] [-Z]
+                pattern path [path ...]
 
 positional arguments:
   pattern               use PATTERN as the pattern to search for.
@@ -38,9 +38,10 @@ optional arguments:
                         print only names of FILEs with match pattern.
   -L, --files-without-match
                         print only names of FILEs with no match pattern.
-  -sep SEPARATOR, --separator SEPARATOR
-                        define custom list separator for output, default is TAB
-  
+  -S SEPARATOR, --separator SEPARATOR
+                        define custom list separator for output, the default is TAB
+  -Z, --null            output a zero byte (the ASCII NUL character) instead of the usual newline.
+ 
 ```
 
 ## Examples: 
