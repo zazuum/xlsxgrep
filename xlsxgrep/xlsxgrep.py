@@ -9,16 +9,18 @@ import logging
 import pyexcel as p
 from pathlib import Path
 
-__version__ = '0.0.29'
+__version__ = '0.0.30'
 
 
 def main():
 
-    example_text = '''examples:\n  xlsxgrep -i "foo" foobar.xlsx\n  xlsxgrep -c -H "(?i)foo|bar" /folder 
+    example_text = '''examples:\n  xlsxgrep -i "foo" foobar.xlsx\n  xlsxgrep -c -H "(?i)foo|bar" /folder
 			\n'''
     parser = argparse.ArgumentParser(prog='xlsxgrep',
                                      epilog=example_text,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('-h','--help', action="help", help="show this help message and exit.")
     parser.add_argument('pattern', help="use PATTERN as the pattern to search for.",
                         type=str)
     parser.add_argument("-V", '--version', help="display version information and exit.",
@@ -74,8 +76,8 @@ def main():
     Files_with_match = args.files_with_match
     Files_without_match = args.files_without_match
     ShowFileAndSheetName = args.with_sheetname
-    ZeroByte = args.null 
-    
+    ZeroByte = args.null
+
 
     def DisableWarningsAndLoggings():
         ## - Supress unsupported file extensions warnings.
@@ -93,7 +95,7 @@ def main():
         #warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
         ## - Disable all logging warnings
         logging.disable(logging.WARNING)
-        
+
     DisableWarningsAndLoggings()
 
 # Valid Python Regex Check ( Optional Argument -P, --python-regex)
@@ -123,9 +125,9 @@ def main():
     def File_And_Path_Location():
         File_List = [ ]
         fileTypes = ('.xls', '.XLS','.xlsx', '.XLSX', '.ods', '.ODS',
-                     '.csv', '.CSV', '.tsv', '.TSV')
+                     '.csv', '.CSV', '.tsv', '.TSV', '.xlsm', '.XLSM')
         for i in args.path[0]:
-            
+
             if (Path(i).is_file() is False) and (Path(i).is_dir() is False):
                 exit(str(i) + " File or folder not found. ")
 
@@ -146,13 +148,13 @@ def main():
                 # perform file check
                 print("Error:   Unsupported file format: ",
                       Path(i), file=sys.stderr)
-        
+
         SEARCH(File_List)
 
 # Checking pattern optional arguments ("-P", '--python-regex', "-w", '--word-regexp')
 
     def Check_Optional_Args(val):
-        
+
         if args.python_regex == True:
             return re.search(r'%s' % Query, str(val))
 
@@ -173,7 +175,7 @@ def main():
 # Checking output optional arguments ("-H", '--with-filename', "-N", '--with-sheetname')
 
     def Show_Filename_And_Sheetname(file, active_sheet, linesArray):
-        ENDSWITH="\n" 
+        ENDSWITH="\n"
         if ZeroByte:
             ENDSWITH =""
 
@@ -202,8 +204,8 @@ def main():
 
 
 # Iterate over rows and columns and append matches count to array.
- 
-    SumOfROW , SumOfCELL , SumOfSTR = [] , [] , []    
+
+    SumOfROW , SumOfCELL , SumOfSTR = [] , [] , []
     def Iterate_Over_Cells(book, file):
         ROWcount, CELLcount, STRcount = [0] , [0] ,[0]
         for key, item in book.items():
@@ -219,7 +221,7 @@ def main():
                         if args.python_regex == False:
                          for x in re.findall(reESCapedQuery , STRcell):
                             STRcount[0] = STRcount[0] + 1
-                     
+
                         else:
                             for x in re.findall(str(Query), str(cell)):
                                 STRcount[0] = STRcount[0] + 1
@@ -229,7 +231,7 @@ def main():
 
                 if AuxFlag == True:
                     ROWcount[0] = ROWcount[0] + 1
-                    
+
                     Show_Filename_And_Sheetname(file, key, line)
 
 
@@ -243,9 +245,9 @@ def main():
           SumOfCELL.extend(CELLcount)
           SumOfSTR.extend(STRcount)
           SumOfROW.extend(ROWcount)
-                        
-                   
-                
+
+
+
     # Check files-with-match and files-without-match arguments
 
     def HyphenlAndHyphenLCheck(book,file):
@@ -253,16 +255,16 @@ def main():
         if args.null:
             ENDSWITH =""
 
-        if Files_with_match:            
+        if Files_with_match:
             if Check_Optional_Args(book):
                  return print(file, end=ENDSWITH)
-                
+
         elif Files_without_match:
             if not Check_Optional_Args(book):
                 return print(file, end=ENDSWITH)
-        
+
         else:
-    
+
             Iterate_Over_Cells(book,file)
 
 
@@ -271,25 +273,25 @@ def main():
     def SumOfRowsCellsAndStrings():
          ROWS, CELLS, STRINGS = sum(SumOfROW) , sum(SumOfCELL), sum(SumOfSTR)
          print("Search results: ", ROWS , "Rows, ",CELLS, "Cells, ", STRINGS, "Strings"  )
-             
+
 
 # Opening files, start searching
 
     def SEARCH(File_List):
         for file in File_List:
             try:
-                if file.endswith((".xlsx",".XLSX")):
+                if file.endswith((".xlsx",".XLSX",".xlsm",".XLSM")):
                     book = p.get_book_dict(file_name=file, skip_hidden_row_and_column=False)
-                
+
                 else:
                     book = p.get_book_dict(file_name=file,)
 
-                
+
                 HyphenlAndHyphenLCheck(book, file)
 
 
             except KeyboardInterrupt:
-            
+
                 sys.exit(0)
 
             except:
@@ -300,7 +302,7 @@ def main():
         if Count:
             if Files_with_match or Files_without_match:
                 pass
-            
+
             else:
                 SumOfRowsCellsAndStrings()
 
@@ -309,4 +311,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
