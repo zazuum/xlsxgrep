@@ -12,7 +12,7 @@ import locale
 from textwrap import dedent
 
 __license__ = "MIT"
-__version__ = "0.0.31"
+__version__ = "0.0.32"
 __author__ = "Ivan Cvitic"
 __email__ = "cviticivan@gmail.com"
 VERSION_INFO = [
@@ -181,7 +181,7 @@ examples:
         action="store_true",
     )
     parser.add_argument(
-        "-d"
+        "-d",
         "--debug",
         help=argparse.SUPPRESS,
         required=False,
