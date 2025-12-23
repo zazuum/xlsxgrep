@@ -39,7 +39,7 @@ optional arguments:
   -l, --files-with-match    print only names of FILEs with match pattern.
   -L, --files-without-match print only names of FILEs with no match pattern.
   -S SEPARATOR, --separator SEPARATOR define custom list separator for output, the 
-			                      default is TAB.
+                            default is TAB.
   -Z, --null                output a zero byte (the ASCII NUL character) instead of the
                             usual newline.
 
