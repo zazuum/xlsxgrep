@@ -181,6 +181,7 @@ examples:
         action="store_true",
     )
     parser.add_argument(
+        "-d"
         "--debug",
         help=argparse.SUPPRESS,
         required=False,
