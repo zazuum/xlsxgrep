@@ -19,29 +19,30 @@
 ```
 
 usage: xlsxgrep [-h] [-V] [-P] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR]
-                [-Z] [-d] PATTERN FILE [FILE ...]
+                [-Z] [--row | --column] [-d] PATTTERN FILE [FILE ...]
 
 positional arguments:
-  PATTERN                   use PATTERN as the pattern to search for.
-  FILE                      file or folder location.
+  PATTERN                    use PATTERN as the pattern to search for.
+  FILE                       file or path to folder
 
-optional arguments:
-  -h, --help	            show this help message and exit.
-  -V, --version	            display version information and exit.
-  -P, --python-regex        PATTERN is a Python regular expression. This is the default.
-  -F, --fixed-strings       interpret PATTERN as fixed strings, not regular expressions.
-  -i, --ignore-case         ignore case distinctions.
-  -w, --word-regexp         force PATTERN to match only whole words.
-  -c, --count               print only a count of matches per file.
-  -r, --recursive           search directories recursively.
-  -H, --with-filename       print the file name for each match.
-  -N, --with-sheetname      print the sheet name for each match.
-  -l, --files-with-match    print only names of FILEs with match pattern.
-  -L, --files-without-match print only names of FILEs with no match pattern.
-  -S SEPARATOR, --separator SEPARATOR define custom list separator for output, the 
-                            default is TAB.
-  -Z, --null                output a zero byte (the ASCII NUL character) instead of the
-                            usual newline.
+options:
+  -h, --help                 show this help message and exit.
+  -V, --version              display version information and exit.
+  -P, --python-regex         PATTERN is a Python regular expression. This is the default.
+  -F, --fixed-strings        interpret PATTERN as fixed strings, not regular expressions.
+  -i, --ignore-case          ignore case distinctions.
+  -w, --word-regexp          force PATTERN to match only whole words.
+  -c, --count                print only a count of matches per file.
+  -r, --recursive            search directories recursively.
+  -H, --with-filename        print the file name for each match.
+  -N, --with-sheetname       print the sheet name for each match.
+  -l, --files-with-match     print only names of FILEs with match pattern.
+  -L, --files-without-match  print only names of FILEs with no match pattern.
+  -S, --separator SEPARATOR  define custom list separator for output, the default is TAB.
+  -Z, --null                 output a zero byte (the ASCII NUL character) instead of the
+                             usual newline.
+      --row                  search rows and print matching rows (default).
+      --column               search columns and print whole matching columns vertically.
 
 ```
 
