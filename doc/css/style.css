@@ -1,0 +1,485 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --ink: #f7fbff;
+  --muted: #a9c4d4;
+  --soft: #6f94a8;
+  --line: rgba(206, 238, 255, 0.18);
+  --panel: #21475f;
+  --panel-deep: #122b3d;
+  --blue: #80cbc4;
+  --yellow: #ffc600;
+  --bg: #193549;
+  --max: 1240px;
+  --content-max: 1120px;
+  --sans: 'Space Grotesk', 'Trebuchet MS', sans-serif;
+  --mono: 'DM Mono', 'Courier New', monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+body::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  content: '';
+  opacity: 0.2;
+  background-image: linear-gradient(rgba(128, 203, 196, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(128, 203, 196, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
+  pointer-events: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--yellow);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+code,
+pre,
+var {
+  font-family: var(--mono);
+}
+
+code {
+  padding: 0.16em 0.36em;
+  border: 1px solid var(--line);
+  background: rgba(18, 43, 61, 0.58);
+  border-radius: 4px;
+  color: var(--blue);
+  font-size: 0.95em;
+}
+
+pre {
+  margin: 0 0 20px;
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: rgba(18, 43, 61, 0.9);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.gh-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--line);
+  background: rgba(18, 43, 61, 0.82);
+  backdrop-filter: blur(14px);
+}
+
+.gh-header-inner {
+  display: flex;
+  align-items: center;
+  min-height: 76px;
+  width: min(calc(100% - 48px), var(--max));
+  margin-inline: auto;
+}
+
+.gh-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gh-nav a {
+  color: var(--muted);
+}
+
+.gh-nav a:hover,
+.gh-nav a:first-child {
+  color: var(--yellow);
+}
+
+.gh-nav-man {
+  margin-right: auto;
+}
+
+.gh-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.gh-btn-outline {
+  color: var(--ink);
+  background: rgba(18, 43, 61, 0.72);
+}
+
+.gh-btn-primary {
+  color: var(--panel-deep);
+  border-color: transparent;
+  background: var(--yellow);
+}
+
+.gh-btn-outline:hover {
+  color: var(--yellow);
+  border-color: var(--yellow);
+  background: rgba(18, 43, 61, 0.95);
+}
+
+.gh-btn-primary:hover {
+  color: var(--panel-deep);
+  background: var(--blue);
+}
+
+.gh-repo-page,
+.gh-man-page {
+  width: min(calc(100% - 48px), var(--content-max));
+  margin: 0 auto;
+  padding: 42px 0 72px;
+}
+
+.gh-repo-header,
+.gh-man-header {
+  margin-bottom: 26px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.gh-repo-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.gh-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gh-breadcrumb strong {
+  color: var(--yellow);
+  font-weight: 500;
+}
+
+.gh-repo-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gh-repo-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 22px;
+}
+
+.gh-readme,
+.gh-man-body,
+.gh-repo-sidebar {
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--panel);
+}
+
+.gh-readme,
+.gh-man-body {
+  min-width: 0;
+  padding: 28px;
+}
+
+.gh-readme h1 {
+  margin-bottom: 20px;
+  color: var(--yellow);
+  font-size: clamp(34px, 5vw, 52px);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 0.96;
+}
+
+.gh-readme h2,
+.gh-man-section h2 {
+  margin: 32px 0 14px;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.gh-man-section h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--yellow);
+  font-size: 14px;
+}
+
+.gh-readme-lead,
+.gh-readme p,
+.gh-readme li,
+.gh-readme dd,
+.gh-man-section p,
+.gh-man-section dd {
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.gh-readme p,
+.gh-readme ul,
+.gh-readme dl,
+.gh-man-section p,
+.gh-man-section pre,
+.gh-man-dl {
+  margin: 0 0 16px;
+}
+
+.gh-readme ul,
+.gh-topic-list,
+.gh-repo-meta {
+  padding-left: 0;
+  list-style: none;
+}
+
+.gh-readme ul li,
+.gh-topic-list li,
+.gh-repo-meta li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.gh-readme ul li + li,
+.gh-topic-list li + li,
+.gh-repo-meta li + li {
+  margin-top: 8px;
+}
+
+.gh-readme ul li::before,
+.gh-topic-list li::before,
+.gh-repo-meta li::before {
+  position: absolute;
+  left: 0;
+  top: 0.48em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  content: '';
+  background: var(--blue);
+  box-shadow: 0 0 0 4px rgba(128, 203, 196, 0.12);
+}
+
+.gh-readme-dl dt,
+.gh-man-dl dt {
+  margin-top: 14px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.gh-readme-dl dd,
+.gh-man-dl dd {
+  margin: 6px 0 0;
+}
+
+.gh-readme-dl dd {
+  padding-left: 0;
+}
+
+.gh-man-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 12px 0 0;
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gh-man-section + .gh-man-section {
+  margin-top: 26px;
+}
+
+.gh-man-synopsis {
+  margin: 0;
+  font-size: 14px;
+}
+
+.gh-repo-sidebar {
+  align-self: start;
+  padding: 22px;
+  background: var(--panel-deep);
+}
+
+.gh-repo-sidebar h2,
+.gh-repo-sidebar h3 {
+  margin: 0 0 10px;
+  color: var(--yellow);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.gh-repo-sidebar h3 {
+  margin-top: 18px;
+}
+
+.gh-repo-sidebar p,
+.gh-repo-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.gh-repo-meta a {
+  color: var(--ink);
+}
+
+.gh-lang-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.gh-lang-python {
+  background: var(--yellow);
+}
+
+.gh-back-home {
+  width: min(calc(100% - 48px), var(--content-max));
+  margin: -34px auto 30px;
+}
+
+.gh-back-home .gh-repo-meta {
+  margin: 0;
+}
+
+.gh-footer {
+  padding: 26px 0 34px;
+  border-top: 1px solid var(--line);
+  background: rgba(18, 43, 61, 0.7);
+}
+
+.gh-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(calc(100% - 48px), var(--content-max));
+  margin-inline: auto;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.gh-footer a {
+  color: var(--blue);
+}
+
+.gh-footer-sep {
+  color: var(--soft);
+}
+
+@media (max-width: 1011px) {
+  .gh-repo-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .gh-repo-sidebar {
+    order: 2;
+  }
+}
+
+@media (max-width: 767px) {
+  .gh-header-inner {
+    min-height: 64px;
+    width: min(calc(100% - 32px), var(--max));
+  }
+
+  .gh-repo-page,
+  .gh-man-page,
+  .gh-footer-inner,
+  .gh-back-home {
+    width: min(calc(100% - 32px), var(--content-max));
+  }
+
+  .gh-repo-page,
+  .gh-man-page {
+    padding-top: 28px;
+    padding-bottom: 54px;
+  }
+
+  .gh-readme,
+  .gh-man-body,
+  .gh-repo-sidebar {
+    padding: 20px;
+  }
+
+  .gh-readme h1 {
+    font-size: clamp(32px, 12vw, 44px);
+  }
+
+  .gh-repo-header-actions {
+    width: 100%;
+  }
+
+  .gh-btn {
+    flex: 1;
+  }
+}

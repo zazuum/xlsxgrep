@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VQNH7RL9F0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-VQNH7RL9F0');
+  </script>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>zazuum/xlsxgrep</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="gh-header">
+    <div class="gh-header-inner">
+      <nav class="gh-nav gh-nav-man" aria-label="Global">
+        <a href="https://www.zazuum.org">zazuum.org</a>
+        <a href="index.html">xlsxgrep</a>
+      </nav>
+
+      <div class="gh-header-actions">
+      </div>
+    </div>
+  </header>
+
+  <main class="gh-repo-page">
+    <div class="gh-repo-header">
+      <div class="gh-repo-header-main">
+        <nav class="gh-breadcrumb" aria-label="Breadcrumb">
+          <strong>xlsxgrep / docs / info</strong></br>
+           
+        </nav>
+      </div>
+      <div class="gh-repo-header-actions">
+        <a class="gh-btn gh-btn-outline" href="https://github.com/zazuum/xlsxgrep" target="_blank" rel="noopener noreferrer">Source Code</a>
+        <a class="gh-btn gh-btn-primary" href="https://pypi.org/project/xlsxgrep/" target="_blank" rel="noopener noreferrer">Install on PyPI</a>
+      </div>
+    </div>
+
+    <div class="gh-repo-layout">
+      <article class="gh-readme">
+        <h1>xlsxgrep</h1>
+        <p class="gh-readme-lead">
+          xlsxgrep is a CLI utility designed to search text inside spreadsheet files including XLSX, XLS, XLSM, CSV, TSV, and ODS formats. 
+          Built to mimic the behavior of traditional Unix/GNU Linux grep, it bridges the gap between terminal efficiency and tabular data.
+          Whether you need to count matches across a directory of legacy .xls files, extract specific patterns using Python regular expressions,
+           or output clean tab-separated data for your automation scripts, xlsxgrep handles it natively without requiring you to boot up heavy office suites.
+        </p>
+
+        <h2>Features</h2>
+        <ul>
+          <li><strong>Grep compatible:</strong> supports common grep-style options such as <code>-r</code>, <code>-i</code>, and <code>-c</code>.</li>
+          <li><strong>Batch search:</strong> search many spreadsheet files at once, including recursive directory scans.</li>
+          <li><strong>Regular expressions:</strong> Python regex support, with fixed-string mode via <code>-F</code>.</li>
+          <li><strong>Supported formats:</strong> csv, ods, tsv, xls, xlsx, xlsm.</li>
+          <li><strong>Cross-platform:</strong> works on Windows, macOS, BSD, and Linux.</li>
+          <li><strong>Search modes:</strong> row mode (default) prints matching rows; column mode prints whole matching columns vertically.</li>
+        </ul>
+
+        <h2>Installation</h2>
+        <pre><code>pip install xlsxgrep</code></pre>
+
+        <h2>Usage</h2>
+        <pre><code>xlsxgrep [OPTION]... PATTERN FILE [FILE]...</code></pre>
+        <p>
+          See the <a href="manual.html">manual page</a> for full option descriptions,
+          search modes, exit status, and additional examples.
+        </p>
+
+        <h2>Examples</h2>
+        <p>Search a spreadsheet case-insensitively:</p>
+        <pre><code>xlsxgrep -i "foo" foobar.xlsx</code></pre>
+
+        <p>Count matches and include file names when searching a folder recursively:</p>
+        <pre><code>xlsxgrep -c -H -r "(?i)foo|bar" /folder</code></pre>
+
+        <p>Search columns and print matching columns vertically:</p>
+        <pre><code>xlsxgrep --column "error" report.xlsx</code></pre>
+
+        <p>List only files that contain a match:</p>
+        <pre><code>xlsxgrep -l "invoice" reports/</code></pre>
+
+        <h2>Search modes</h2>
+        <dl class="gh-readme-dl">
+          <dt>Row mode (<code>--row</code>, default)</dt>
+          <dd>If any cell in a row matches the pattern, the entire row is printed with fields separated by the configured separator.</dd>
+          <dt>Column mode (<code>--column</code>)</dt>
+          <dd>If any cell in a column matches the pattern, every cell in that column is printed, one per line.</dd>
+        </dl>
+
+        <h2>Links</h2>
+        <ul>
+          <li><a href="manual.html">Manual page (all options)</a></li>
+          <li><a href="https://pypi.org/project/xlsxgrep/" target="_blank" rel="noopener noreferrer">PyPI package</a></li>
+          <li><a href="https://github.com/zazuum/xlsxgrep" target="_blank" rel="noopener noreferrer">Source code on GitHub</a></li>
+          
+        </ul>
+      </article>
+
+      <aside class="gh-repo-sidebar">
+        <h2>About</h2>
+        <p>Search spreadsheet files from the command line with a familiar grep-style interface.</p>
+
+         <h3>Details</h3>
+        <ul class="gh-repo-meta">
+          <li><span class="gh-lang-dot gh-lang-python"></span> Python</li>
+          <li>MIT License</li>
+          <li>Latest Version 0.0.33</li>
+ 
+        <h3>Documentation</h3>
+        <ul class="gh-repo-meta">
+          <li><a href="manual.html">Manual page</a></li>
+        </ul>
+
+
+        <h3>Topics</h3>
+        <ul class="gh-topic-list">
+          <li>cli</li>
+          <li>python</li>
+          <li>grep</li>
+          <li>spreadsheet</li>
+          <li>xlsx</li>
+        </ul>
+        </ul>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="gh-footer">
+    <div class="gh-footer-inner">
+      <span>&copy; Ivan Cvitic</span>
+      <span class="gh-footer-sep">&middot;</span>
+      <a href="https://www.zazuum.org">www.zazuum.org</a>
+    </div>
+  </footer>
+</body>
+</html>

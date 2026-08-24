@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VQNH7RL9F0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-VQNH7RL9F0');
+  </script>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>xlsxgrep(1) — manual page</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="gh-header">
+    <div class="gh-header-inner">
+      <nav class="gh-nav gh-nav-man" aria-label="Global">
+        <a href="https://www.zazuum.org">zazuum.org</a>
+        <a href="index.html">xlsxgrep</a>
+      </nav>
+
+      <div class="gh-header-actions">
+      </div>
+    </div>
+  </header>
+
+  <main class="gh-man-page">
+    <header class="gh-man-header">
+      <nav class="gh-breadcrumb" aria-label="Breadcrumb">
+        <strong> xlsxgrep / docs / manual</strong>
+      </nav>
+      <p class="gh-man-meta">
+        <span>XLSXGREP(1)</span>
+        <span>User Commands</span>
+        <span>xlsxgrep 0.0.33</span>
+        <span>August 2026</span>
+      </p>
+    </header>
+
+    <article class="gh-man-body">
+      <section class="gh-man-section" id="name">
+        <h2>Name</h2>
+        <p><strong>xlsxgrep</strong> — search text in spreadsheet files</p>
+      </section>
+
+      <section class="gh-man-section" id="synopsis">
+        <h2>Synopsis</h2>
+        <pre class="gh-man-synopsis"><code>xlsxgrep [<var>OPTION</var>]... <var>PATTERN</var> <var>FILE</var> [<var>FILE</var>]...</code></pre>
+      </section>
+
+      <section class="gh-man-section" id="description">
+        <h2>Description</h2>
+        <p>
+          <strong>xlsxgrep</strong> searches for a text pattern in spreadsheet files.
+          It works similarly to <strong>grep</strong>(1), but operates on XLSX, XLS, XLSM, CSV, TSV, and ODS files.
+        </p>
+        <p>
+          When a match is found, output depends on the selected search mode.
+          In row mode (the default), matching rows are printed with fields separated by a tab.
+          In column mode, whole columns containing at least one match are printed vertically, one cell per line.
+        </p>
+      </section>
+
+      <section class="gh-man-section" id="options">
+        <h2>Options</h2>
+        <dl class="gh-man-dl">
+          <dt><code>-h</code>, <code>--help</code></dt>
+          <dd>Show help message and exit.</dd>
+
+          <dt><code>-V</code>, <code>--version</code></dt>
+          <dd>Display version information and exit.</dd>
+
+          <dt><code>-P</code>, <code>--python-regex</code></dt>
+          <dd>Treat <var>PATTERN</var> as a Python regular expression. This is the default.</dd>
+
+          <dt><code>-F</code>, <code>--fixed-strings</code></dt>
+          <dd>Treat <var>PATTERN</var> as a fixed string, not a regular expression.</dd>
+
+          <dt><code>-i</code>, <code>--ignore-case</code></dt>
+          <dd>Ignore case distinctions in <var>PATTERN</var> and input data.</dd>
+
+          <dt><code>-w</code>, <code>--word-regexp</code></dt>
+          <dd>Force <var>PATTERN</var> to match only whole words.</dd>
+
+          <dt><code>-c</code>, <code>--count</code></dt>
+          <dd>Print only a count of matches per file.</dd>
+
+          <dt><code>-r</code>, <code>--recursive</code></dt>
+          <dd>Search directories recursively.</dd>
+
+          <dt><code>-H</code>, <code>--with-filename</code></dt>
+          <dd>Print the file name for each match.</dd>
+
+          <dt><code>-N</code>, <code>--with-sheetname</code></dt>
+          <dd>Print the sheet name for each match.</dd>
+
+          <dt><code>-l</code>, <code>--files-with-match</code></dt>
+          <dd>Print only the names of files that contain a match.</dd>
+
+          <dt><code>-L</code>, <code>--files-without-match</code></dt>
+          <dd>Print only the names of files that do not contain a match.</dd>
+
+          <dt><code>-S</code> <var>SEPARATOR</var>, <code>--separator</code> <var>SEPARATOR</var></dt>
+          <dd>Use <var>SEPARATOR</var> as the field separator in row output. The default is a tab character.</dd>
+
+          <dt><code>-Z</code>, <code>--null</code></dt>
+          <dd>Output a zero byte (ASCII NUL) instead of the usual newline after each match.</dd>
+
+          <dt><code>--row</code></dt>
+          <dd>Search rows and print matching rows. This is the default search mode.</dd>
+
+          <dt><code>--column</code></dt>
+          <dd>Search columns and print whole matching columns vertically.</dd>
+        </dl>
+      </section>
+
+      <section class="gh-man-section" id="search-modes">
+        <h2>Search modes</h2>
+        <dl class="gh-man-dl">
+          <dt>Row mode (<code>--row</code>, default)</dt>
+          <dd>If any cell in a row matches <var>PATTERN</var>, the entire row is printed on one line with fields separated by the configured separator.</dd>
+
+          <dt>Column mode (<code>--column</code>)</dt>
+          <dd>If any cell in a column matches <var>PATTERN</var>, every cell in that column is printed, one per line.</dd>
+        </dl>
+      </section>
+
+      <section class="gh-man-section" id="supported-formats">
+        <h2>Supported formats</h2>
+        <p>csv, ods, tsv, xls, xlsx, xlsm</p>
+      </section>
+
+      <section class="gh-man-section" id="examples">
+        <h2>Examples</h2>
+        <p>Search a spreadsheet case-insensitively:</p>
+        <pre><code>xlsxgrep -i "foo" foobar.xlsx</code></pre>
+
+        <p>Count matches and include file names when searching a folder recursively:</p>
+        <pre><code>xlsxgrep -c -H -r "(?i)foo|bar" /folder</code></pre>
+
+        <p>Search columns and print matching columns vertically:</p>
+        <pre><code>xlsxgrep --column "error" report.xlsx</code></pre>
+      </section>
+
+      <section class="gh-man-section" id="exit-status">
+        <h2>Exit status</h2>
+        <dl class="gh-man-dl">
+          <dt><strong>0</strong></dt>
+          <dd>Matches were found, or no error occurred.</dd>
+          <dt><strong>1</strong></dt>
+          <dd>No matches were found, or a usage error occurred.</dd>
+        </dl>
+      </section>
+
+      <section class="gh-man-section" id="see-also">
+        <h2>See also</h2>
+        <p><strong>grep</strong>(1), <strong>pdfgrep</strong>(1) </p>
+      </section>
+
+      <section class="gh-man-section" id="author">
+        <h2>Author</h2>
+        <p>Ivan Cvitic &lt;<a href="mailto:cviticivan@gmail.com">cviticivan@gmail.com</a>&gt;</p>
+      </section>
+
+      <section class="gh-man-section" id="bugs">
+        <h2>Bugs</h2>
+        <p>Report issues at <a href="https://github.com/zazuum/xlsxgrep" target="_blank" rel="noopener noreferrer">https://github.com/zazuum/xlsxgrep</a></p>
+      </section>
+    </article>
+  </main>
+
+  <div class="gh-back-home">
+    <ul class="gh-repo-meta">
+      <li><a href="index.html">Back to homepage</a></li>
+    </ul>
+  </div>
+
+  <footer class="gh-footer">
+    <div class="gh-footer-inner">
+      <span>&copy;  Ivan Cvitic</span>
+      <span class="gh-footer-sep">&middot;</span>
+      <a href="https://www.zazuum.org">www.zazuum.org</a>
+    </div>
+  </footer>
+</body>
+</html>
