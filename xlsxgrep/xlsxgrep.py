@@ -12,7 +12,7 @@ import locale
 from textwrap import dedent
 
 __license__ = "MIT"
-__version__ = "0.0.32"
+__version__ = "0.0.33"
 __author__ = "Ivan Cvitic"
 __email__ = "cviticivan@gmail.com"
 VERSION_INFO = [
@@ -46,6 +46,8 @@ options:
   -S, --separator SEPARATOR  define custom list separator for output, the default is TAB.
   -Z, --null                 output a zero byte (the ASCII NUL character) instead of the 
                              usual newline.
+      --row                  search rows and print matching rows (default).
+      --column               search columns and print whole matching columns vertically.
 
 examples:
     xlsxgrep -i "foo" foobar.xlsx
@@ -58,7 +60,7 @@ examples:
         usage=dedent(
             """
 	    xlsxgrep [-h] [-V] [-P] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR] 
-                [-Z] [-d] PATTTERN FILE [FILE ...]
+                [-Z] [--row | --column] [-d] PATTTERN FILE [FILE ...]
 
 
             """
@@ -186,6 +188,17 @@ examples:
         help=argparse.SUPPRESS,
         required=False,
         default=False,
+        action="store_true",
+    )
+    search_mode = parser.add_mutually_exclusive_group()
+    search_mode.add_argument(
+        "--row",
+        help=argparse.SUPPRESS,
+        action="store_true",
+    )
+    search_mode.add_argument(
+        "--column",
+        help=argparse.SUPPRESS,
         action="store_true",
     )
 
@@ -332,10 +345,25 @@ examples:
 
     # Checking output optional arguments ("-H", '--with-filename', "-N", '--with-sheetname')
 
+    def Line_Ending():
+        return "" if args.null else "\n"
+
+    def Show_Single_Match(file, active_sheet, value):
+        ENDSWITH = Line_Ending()
+        if args.count or args.files_with_match or args.files_without_match:
+            return
+
+        if args.with_filename and args.with_sheetname:
+            print(f"{file}: {active_sheet}: {value}", end=ENDSWITH)
+        elif args.with_filename:
+            print(f"{file}: {value}", end=ENDSWITH)
+        elif args.with_sheetname:
+            print(f"{active_sheet}: {value}", end=ENDSWITH)
+        else:
+            print(value, end=ENDSWITH)
+
     def Show_Filename_And_Sheetname(file, active_sheet, linesArray):
-        ENDSWITH = "\n"
-        if args.null:
-            ENDSWITH = ""
+        ENDSWITH = Line_Ending()
 
         if args.count == True:
             pass
@@ -378,11 +406,41 @@ examples:
             else:
                 print(*linesArray, sep=str(args.separator), end=ENDSWITH)
 
-    # Iterate over rows and columns and append matches count to array.
+    # Iterate over rows or columns and append matches count to array.
 
     SumOfROW, SumOfCELL, SumOfSTR = [], [], []
 
-    def Iterate_Over_Cells(book, file):
+    def Count_Matching_Strings(cell, STRcount):
+        reESCapedQuery = re.escape(str(args.PATTERN).upper())
+        STRcell = str(cell).upper()
+        if args.python_regex == False:
+            for x in re.findall(reESCapedQuery, STRcell):
+                STRcount[0] = STRcount[0] + 1
+        else:
+            for x in re.findall(str(args.PATTERN), str(cell)):
+                STRcount[0] = STRcount[0] + 1
+
+    def Print_Count_Summary(file, label, count, CELLcount, STRcount):
+        if not args.count or count[0] <= 0:
+            return
+        ENDSWITH = Line_Ending()
+        if args.with_sheetname or args.with_filename:
+            print(
+                file,
+                ":",
+                count[0],
+                label + ", ",
+                CELLcount[0],
+                "Cells, ",
+                STRcount[0],
+                "Strings",
+                end=ENDSWITH,
+            )
+        SumOfCELL.extend(CELLcount)
+        SumOfSTR.extend(STRcount)
+        SumOfROW.extend(count)
+
+    def Iterate_Over_Rows(book, file):
         ROWcount, CELLcount, STRcount = [0], [0], [0]
         for key, item in book.items():
             for line in item:
@@ -392,45 +450,51 @@ examples:
                         if args.count:
                             AuxFlag = True
                             CELLcount[0] = CELLcount[0] + 1
-                            reESCapedQuery = re.escape(
-                                str(args.PATTERN).upper())
-                            STRcell = str(cell).upper()
-                            if args.python_regex == False:
-                                for x in re.findall(reESCapedQuery, STRcell):
-                                    STRcount[0] = STRcount[0] + 1
-
-                            else:
-                                for x in re.findall(str(args.PATTERN), str(cell)):
-                                    STRcount[0] = STRcount[0] + 1
+                            Count_Matching_Strings(cell, STRcount)
                         else:
                             AuxFlag = True
                             ROWcount[0] = ROWcount[0] - 1
 
                 if AuxFlag == True:
                     ROWcount[0] = ROWcount[0] + 1
-
                     Show_Filename_And_Sheetname(file, key, line)
 
-        if ROWcount[0] > 0:
-            ENDSWITH = "\n"
-            ROWS, CELLS, STRINGS = ROWcount, CELLcount, STRcount
-            if args.null:
-                ENDSWITH = ""
-            if args.with_sheetname or args.with_filename:
-                print(
-                    file,
-                    ":",
-                    ROWS[0],
-                    "Rows, ",
-                    CELLS[0],
-                    "Cells, ",
-                    STRINGS[0],
-                    "Strings",
-                    end=ENDSWITH,
+        Print_Count_Summary(file, "Rows", ROWcount, CELLcount, STRcount)
+
+    def Iterate_Over_Columns(book, file):
+        COLcount, CELLcount, STRcount = [0], [0], [0]
+        for key, item in book.items():
+            if not item:
+                continue
+            max_cols = max(len(row) for row in item)
+            for col_idx in range(max_cols):
+                column = [
+                    row[col_idx] if col_idx < len(row) else ""
+                    for row in item
+                ]
+                col_has_match = any(
+                    Check_Optional_Args(cell) for cell in column
                 )
-            SumOfCELL.extend(CELLcount)
-            SumOfSTR.extend(STRcount)
-            SumOfROW.extend(ROWcount)
+                if not col_has_match:
+                    continue
+
+                COLcount[0] = COLcount[0] + 1
+                if args.count:
+                    for cell in column:
+                        if Check_Optional_Args(cell):
+                            CELLcount[0] = CELLcount[0] + 1
+                            Count_Matching_Strings(cell, STRcount)
+                else:
+                    for cell in column:
+                        Show_Single_Match(file, key, cell)
+
+        Print_Count_Summary(file, "Columns", COLcount, CELLcount, STRcount)
+
+    def Iterate_Over_Cells(book, file):
+        if args.column:
+            Iterate_Over_Columns(book, file)
+        else:
+            Iterate_Over_Rows(book, file)
 
     # Check files-with-match and files-without-match arguments
 
@@ -454,9 +518,17 @@ examples:
     # Count matches. Rows, cells and strings.
 
     def SumOfRowsCellsAndStrings():
-        ROWS, CELLS, STRINGS = sum(SumOfROW), sum(SumOfCELL), sum(SumOfSTR)
-        print("Search results: ", ROWS, "Rows, ",
-              CELLS, "Cells, ", STRINGS, "Strings")
+        GROUPS, CELLS, STRINGS = sum(SumOfROW), sum(SumOfCELL), sum(SumOfSTR)
+        group_label = "Columns" if args.column else "Rows"
+        print(
+            "Search results: ",
+            GROUPS,
+            group_label + ", ",
+            CELLS,
+            "Cells, ",
+            STRINGS,
+            "Strings",
+        )
 
     # Opening files, start searching
 
