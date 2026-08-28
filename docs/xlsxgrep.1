@@ -1,5 +1,5 @@
 .\" Man page for xlsxgrep
-.TH XLSXGREP 1 "August 2026" "xlsxgrep 0.0.33" "User Commands"
+.TH XLSXGREP 1 "August 2026" "xlsxgrep 0.0.34" "User Commands"
 .SH NAME
 xlsxgrep \- search text in spreadsheet format files
 .SH SYNOPSIS
@@ -74,6 +74,11 @@ The default is a tab character.
 .TP
 .BR \-Z ", " \-\-null
 Output a zero byte (ASCII NUL) instead of the usual newline after each match.
+.TP
+.BI \-j " JOBS"
+.BI \-\-jobs " JOBS"
+Number of parallel search jobs/processes (default is 1).
+Use 0 to auto-detect available CPU cores.
 .TP
 .B \-\-row
 Search rows and print matching rows.
