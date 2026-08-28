@@ -35,7 +35,7 @@
       <p class="gh-man-meta">
         <span>XLSXGREP(1)</span>
         <span>User Commands</span>
-        <span>xlsxgrep 0.0.33</span>
+        <span>xlsxgrep 0.0.34</span>
         <span>August 2026</span>
       </p>
     </header>
@@ -109,6 +109,9 @@
           <dt><code>-Z</code>, <code>--null</code></dt>
           <dd>Output a zero byte (ASCII NUL) instead of the usual newline after each match.</dd>
 
+          <dt><code>-j</code> <var>JOBS</var>, <code>--jobs</code> <var>JOBS</var></dt>
+          <dd>Number of parallel search jobs/processes (default is 1). Use 0 to auto-detect available CPU cores.</dd>
+
           <dt><code>--row</code></dt>
           <dd>Search rows and print matching rows. This is the default search mode.</dd>
 
@@ -138,8 +141,8 @@
         <p>Search a spreadsheet case-insensitively:</p>
         <pre><code>xlsxgrep -i "foo" foobar.xlsx</code></pre>
 
-        <p>Count matches and include file names when searching a folder recursively:</p>
-        <pre><code>xlsxgrep -c -H -r "(?i)foo|bar" /folder</code></pre>
+        <p>Count matches and include file names when searching a folder recursively with 4 parallel jobs:</p>
+        <pre><code>xlsxgrep -c -H -r -j 4 "(?i)foo|bar" /folder</code></pre>
 
         <p>Search columns and print matching columns vertically:</p>
         <pre><code>xlsxgrep --column "error" report.xlsx</code></pre>

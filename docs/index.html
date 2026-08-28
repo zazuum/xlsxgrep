@@ -55,6 +55,7 @@
         <ul>
           <li><strong>Grep compatible:</strong> supports common grep-style options such as <code>-r</code>, <code>-i</code>, and <code>-c</code>.</li>
           <li><strong>Batch search:</strong> search many spreadsheet files at once, including recursive directory scans.</li>
+          <li><strong>Parallel execution:</strong> multi-process search via <code>-j</code> / <code>--jobs</code> for faster multi-file processing.</li>
           <li><strong>Regular expressions:</strong> Python regex support, with fixed-string mode via <code>-F</code>.</li>
           <li><strong>Supported formats:</strong> csv, ods, tsv, xls, xlsx, xlsm.</li>
           <li><strong>Cross-platform:</strong> works on Windows, macOS, BSD, and Linux.</li>
@@ -75,8 +76,8 @@
         <p>Search a spreadsheet case-insensitively:</p>
         <pre><code>xlsxgrep -i "foo" foobar.xlsx</code></pre>
 
-        <p>Count matches and include file names when searching a folder recursively:</p>
-        <pre><code>xlsxgrep -c -H -r "(?i)foo|bar" /folder</code></pre>
+        <p>Count matches and include file names when searching a folder recursively with 4 CPU cores:</p>
+        <pre><code>xlsxgrep -c -H -r -j 4 "(?i)foo|bar" /folder</code></pre>
 
         <p>Search columns and print matching columns vertically:</p>
         <pre><code>xlsxgrep --column "error" report.xlsx</code></pre>
@@ -109,7 +110,7 @@
         <ul class="gh-repo-meta">
           <li><span class="gh-lang-dot gh-lang-python"></span> Python</li>
           <li>MIT License</li>
-          <li>Latest Version 0.0.33</li>
+          <li>Latest Version 0.0.34</li>
  
         <h3>Documentation</h3>
         <ul class="gh-repo-meta">
