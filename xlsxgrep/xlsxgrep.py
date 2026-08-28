@@ -6,13 +6,16 @@ import argparse
 import re
 import warnings
 import logging
+import os
+import functools
+from concurrent.futures import ProcessPoolExecutor
 import pyexcel as p
 from pathlib import Path
 import locale
 from textwrap import dedent
 
 __license__ = "MIT"
-__version__ = "0.0.33"
+__version__ = "0.0.34"
 __author__ = "Ivan Cvitic"
 __email__ = "cviticivan@gmail.com"
 VERSION_INFO = [
@@ -22,6 +25,298 @@ VERSION_INFO = [
     ),
     "Locale: {0}".format(".".join(str(s) for s in locale.getlocale())),
 ]
+
+
+def check_optional_args(opts, val):
+    pattern = opts["PATTERN"]
+    if opts["python_regex"]:
+        return re.search(r"%s" % pattern, str(val))
+    elif opts["word_regexp"]:
+        if opts["ignore_case"]:
+            return str(pattern).upper() == str(val).upper()
+        else:
+            return str(pattern) == str(val)
+    elif not opts["word_regexp"]:
+        if not opts["ignore_case"]:
+            return str(pattern) in str(val)
+        else:
+            return str(pattern).upper() in str(val).upper()
+    return None
+
+
+def count_matching_strings(opts, cell, STRcount):
+    pattern = opts["PATTERN"]
+    re_escaped = re.escape(str(pattern).upper())
+    str_cell = str(cell).upper()
+    if not opts["python_regex"]:
+        for x in re.findall(re_escaped, str_cell):
+            STRcount[0] += 1
+    else:
+        for x in re.findall(str(pattern), str(cell)):
+            STRcount[0] += 1
+
+
+def format_line_ending(opts):
+    return "" if opts["null"] else "\n"
+
+
+def format_single_match(opts, file, active_sheet, value):
+    endswith = format_line_ending(opts)
+    if opts["count"] or opts["files_with_match"] or opts["files_without_match"]:
+        return ""
+
+    if opts["with_filename"] and opts["with_sheetname"]:
+        return f"{file}: {active_sheet}: {value}{endswith}"
+    elif opts["with_filename"]:
+        return f"{file}: {value}{endswith}"
+    elif opts["with_sheetname"]:
+        return f"{active_sheet}: {value}{endswith}"
+    else:
+        return f"{value}{endswith}"
+
+
+def format_filename_and_sheetname(opts, file, active_sheet, linesArray):
+    endswith = format_line_ending(opts)
+    sep = str(opts["separator"])
+
+    if opts["count"] or opts["files_with_match"] or opts["files_without_match"]:
+        return ""
+
+    if opts["with_filename"]:
+        if opts["with_sheetname"]:
+            return (
+                file
+                + ": "
+                + active_sheet
+                + ": "
+                + sep
+                + sep.join(map(str, linesArray))
+                + endswith
+            )
+        else:
+            return (
+                file
+                + ": "
+                + sep
+                + sep.join(map(str, linesArray))
+                + endswith
+            )
+    else:
+        if opts["with_sheetname"]:
+            return (
+                active_sheet
+                + ": "
+                + sep
+                + sep.join(map(str, linesArray))
+                + endswith
+            )
+        else:
+            return sep.join(map(str, linesArray)) + endswith
+
+
+def process_single_file(file, opts):
+    stdout_lines = []
+    stderr_lines = []
+    SumOfROW, SumOfCELL, SumOfSTR = [0], [0], [0]
+
+    if not opts["debug"]:
+        warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            message="Unknown extension is not supported and will be removed",
+        )
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            message="Data Validation extension is not supported and will be removed",
+        )
+        warnings.filterwarnings(
+            "ignore",
+            category=DeprecationWarning,
+            message=".*Flags not at the start of the expression*.",
+        )
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            message="Conditional Formatting extension is not supported and will be removed",
+        )
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            message="Cannot parse header or footer so it will be ignored",
+        )
+        logging.disable(logging.WARNING)
+    else:
+        warnings.resetwarnings()
+        stdout_lines.append(f"-- debug mode: {file}\n")
+
+    try:
+        if file.endswith((".xlsx", ".XLSX", ".xlsm", ".XLSM")):
+            book = p.get_book_dict(
+                file_name=file, skip_hidden_row_and_column=False
+            )
+        else:
+            book = p.get_book_dict(file_name=file)
+    except KeyboardInterrupt:
+        raise
+    except Exception:
+        stderr_lines.append(
+            f"Error:\tUnsupported format, password protected or corrupted file: {file}\n"
+        )
+        return {
+            "file": file,
+            "stdout": stdout_lines,
+            "stderr": stderr_lines,
+            "counts": (0, 0, 0),
+        }
+
+    endswith = format_line_ending(opts)
+
+    if opts["files_with_match"]:
+        if check_optional_args(opts, book):
+            stdout_lines.append(f"{file}{endswith}")
+        return {
+            "file": file,
+            "stdout": stdout_lines,
+            "stderr": stderr_lines,
+            "counts": (0, 0, 0),
+        }
+    elif opts["files_without_match"]:
+        if not check_optional_args(opts, book):
+            stdout_lines.append(f"{file}{endswith}")
+        return {
+            "file": file,
+            "stdout": stdout_lines,
+            "stderr": stderr_lines,
+            "counts": (0, 0, 0),
+        }
+
+    if opts["column"]:
+        COLcount, CELLcount, STRcount = [0], [0], [0]
+        for key, item in book.items():
+            if not item:
+                continue
+            max_cols = max(len(row) for row in item)
+            for col_idx in range(max_cols):
+                column = [
+                    row[col_idx] if col_idx < len(row) else ""
+                    for row in item
+                ]
+                col_has_match = any(
+                    check_optional_args(opts, cell) for cell in column
+                )
+                if not col_has_match:
+                    continue
+
+                COLcount[0] += 1
+                if opts["count"]:
+                    for cell in column:
+                        if check_optional_args(opts, cell):
+                            CELLcount[0] += 1
+                            count_matching_strings(opts, cell, STRcount)
+                else:
+                    for cell in column:
+                        out = format_single_match(opts, file, key, cell)
+                        if out:
+                            stdout_lines.append(out)
+
+        if opts["count"] and COLcount[0] > 0:
+            if opts["with_sheetname"] or opts["with_filename"]:
+                stdout_lines.append(
+                    f"{file} : {COLcount[0]} Columns,  {CELLcount[0]} Cells,  {STRcount[0]} Strings{endswith}"
+                )
+            SumOfROW[0] = COLcount[0]
+            SumOfCELL[0] = CELLcount[0]
+            SumOfSTR[0] = STRcount[0]
+    else:
+        ROWcount, CELLcount, STRcount = [0], [0], [0]
+        for key, item in book.items():
+            for line in item:
+                AuxFlag = False
+                for cell in line:
+                    if check_optional_args(opts, cell):
+                        if opts["count"]:
+                            AuxFlag = True
+                            CELLcount[0] += 1
+                            count_matching_strings(opts, cell, STRcount)
+                        else:
+                            AuxFlag = True
+                            ROWcount[0] -= 1
+
+                if AuxFlag:
+                    ROWcount[0] += 1
+                    out = format_filename_and_sheetname(opts, file, key, line)
+                    if out:
+                        stdout_lines.append(out)
+
+        if opts["count"] and ROWcount[0] > 0:
+            if opts["with_sheetname"] or opts["with_filename"]:
+                stdout_lines.append(
+                    f"{file} : {ROWcount[0]} Rows,  {CELLcount[0]} Cells,  {STRcount[0]} Strings{endswith}"
+                )
+            SumOfROW[0] = ROWcount[0]
+            SumOfCELL[0] = CELLcount[0]
+            SumOfSTR[0] = STRcount[0]
+
+    return {
+        "file": file,
+        "stdout": stdout_lines,
+        "stderr": stderr_lines,
+        "counts": (SumOfROW[0], SumOfCELL[0], SumOfSTR[0]),
+    }
+
+
+def SEARCH(File_List, opts):
+    SumOfROW, SumOfCELL, SumOfSTR = [], [], []
+    jobs = opts.get("jobs", 1)
+    if jobs <= 0:
+        jobs = os.cpu_count() or 1
+
+    def process_result(res):
+        for err in res["stderr"]:
+            sys.stderr.write(err)
+            sys.stderr.flush()
+        for out in res["stdout"]:
+            sys.stdout.write(out)
+            sys.stdout.flush()
+        r, c, s = res["counts"]
+        if opts["count"] and (r > 0 or c > 0 or s > 0):
+            SumOfROW.append(r)
+            SumOfCELL.append(c)
+            SumOfSTR.append(s)
+
+    if jobs > 1 and len(File_List) > 1:
+        max_workers = jobs
+        worker_fn = functools.partial(process_single_file, opts=opts)
+        try:
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
+                results = executor.map(worker_fn, File_List)
+                for res in results:
+                    process_result(res)
+        except KeyboardInterrupt:
+            sys.exit(0)
+    else:
+        for file in File_List:
+            try:
+                res = process_single_file(file, opts)
+                process_result(res)
+            except KeyboardInterrupt:
+                sys.exit(0)
+
+    if opts["count"]:
+        if not (opts["files_with_match"] or opts["files_without_match"]):
+            GROUPS, CELLS, STRINGS = sum(SumOfROW), sum(SumOfCELL), sum(SumOfSTR)
+            group_label = "Columns" if opts["column"] else "Rows"
+            print(
+                "Search results: ",
+                GROUPS,
+                group_label + ", ",
+                CELLS,
+                "Cells, ",
+                STRINGS,
+                "Strings",
+            )
 
 
 def main():
@@ -46,12 +341,16 @@ options:
   -S, --separator SEPARATOR  define custom list separator for output, the default is TAB.
   -Z, --null                 output a zero byte (the ASCII NUL character) instead of the 
                              usual newline.
+  -j, --jobs JOBS            number of CPU cores/processes to use for search (default: 1).
       --row                  search rows and print matching rows (default).
       --column               search columns and print whole matching columns vertically.
 
 examples:
     xlsxgrep -i "foo" foobar.xlsx
-    xlsxgrep -c -H "(?i)foo|bar" /folder"""
+    xlsxgrep -c -H "(?i)foo|bar" /folder
+
+For more details refer to man page.
+"""
     parser = argparse.ArgumentParser(
         add_help=False,  # epilog=example_text,
         description=dedent(help_text),
@@ -60,7 +359,7 @@ examples:
         usage=dedent(
             """
 	    xlsxgrep [-h] [-V] [-P] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR] 
-                [-Z] [--row | --column] [-d] PATTTERN FILE [FILE ...]
+                [-Z] [-j JOBS] [--row | --column] [-d] PATTTERN FILE [FILE ...]
 
 
             """
@@ -181,6 +480,14 @@ examples:
         # help="output a zero byte (the ASCII NUL character) instead of the usual newline.",
         required=False,
         action="store_true",
+    )
+    parser.add_argument(
+        "-j",
+        "--jobs",
+        help=argparse.SUPPRESS,
+        required=False,
+        default=1,
+        type=int,
     )
     parser.add_argument(
         "-d",
@@ -320,254 +627,27 @@ examples:
                 print("Error:   Unsupported file format: ",
                       Path(i), file=sys.stderr)
 
-        SEARCH(File_List)
+        opts = {
+            "PATTERN": args.PATTERN,
+            "python_regex": args.python_regex,
+            "fixed_strings": args.fixed_strings,
+            "ignore_case": args.ignore_case,
+            "word_regexp": args.word_regexp,
+            "count": args.count,
+            "recursive": args.recursive,
+            "with_filename": args.with_filename,
+            "with_sheetname": args.with_sheetname,
+            "files_with_match": args.files_with_match,
+            "files_without_match": args.files_without_match,
+            "separator": args.separator,
+            "null": args.null,
+            "debug": args.debug,
+            "row": args.row,
+            "column": args.column,
+            "jobs": args.jobs,
+        }
 
-    # Checking pattern optional arguments ("-P", '--python-regex', "-w", '--word-regexp')
-
-    def Check_Optional_Args(val):
-
-        if args.python_regex == True:
-            return re.search(r"%s" % args.PATTERN, str(val))
-
-        elif args.word_regexp == True:
-            if args.ignore_case == True:
-                return str(args.PATTERN).upper() == (str(val).upper())
-            else:
-                return args.PATTERN == (str(val))
-
-        elif args.word_regexp == False:
-            if args.ignore_case == False:
-                return args.PATTERN == args.PATTERN in (str(val))
-            else:
-                return str(args.PATTERN).upper() in (str(val).upper())
-        else:
-            return print("...Some Error Occured...(optional arguments!?)")
-
-    # Checking output optional arguments ("-H", '--with-filename', "-N", '--with-sheetname')
-
-    def Line_Ending():
-        return "" if args.null else "\n"
-
-    def Show_Single_Match(file, active_sheet, value):
-        ENDSWITH = Line_Ending()
-        if args.count or args.files_with_match or args.files_without_match:
-            return
-
-        if args.with_filename and args.with_sheetname:
-            print(f"{file}: {active_sheet}: {value}", end=ENDSWITH)
-        elif args.with_filename:
-            print(f"{file}: {value}", end=ENDSWITH)
-        elif args.with_sheetname:
-            print(f"{active_sheet}: {value}", end=ENDSWITH)
-        else:
-            print(value, end=ENDSWITH)
-
-    def Show_Filename_And_Sheetname(file, active_sheet, linesArray):
-        ENDSWITH = Line_Ending()
-
-        if args.count == True:
-            pass
-
-        elif args.files_with_match:
-            pass
-
-        elif args.files_without_match:
-            pass
-
-        elif args.with_filename == True:
-            if args.with_sheetname == True:
-                return print(
-                    file
-                    + ": "
-                    + active_sheet
-                    + ": "
-                    + str(args.separator)
-                    + str(args.separator).join(map(str, linesArray)),
-                    end=ENDSWITH,
-                )
-
-            elif args.with_sheetname == False:
-                return print(
-                    file + ": " + str(args.separator) +
-                    str(args.separator).join(map(str, linesArray)),
-                    end=ENDSWITH,
-                )
-
-        elif args.with_filename == False:
-            if args.with_sheetname == True:
-                return print(
-                    active_sheet
-                    + ": "
-                    + str(args.separator)
-                    + str(args.separator).join(map(str, linesArray)),
-                    end=ENDSWITH,
-                )
-
-            else:
-                print(*linesArray, sep=str(args.separator), end=ENDSWITH)
-
-    # Iterate over rows or columns and append matches count to array.
-
-    SumOfROW, SumOfCELL, SumOfSTR = [], [], []
-
-    def Count_Matching_Strings(cell, STRcount):
-        reESCapedQuery = re.escape(str(args.PATTERN).upper())
-        STRcell = str(cell).upper()
-        if args.python_regex == False:
-            for x in re.findall(reESCapedQuery, STRcell):
-                STRcount[0] = STRcount[0] + 1
-        else:
-            for x in re.findall(str(args.PATTERN), str(cell)):
-                STRcount[0] = STRcount[0] + 1
-
-    def Print_Count_Summary(file, label, count, CELLcount, STRcount):
-        if not args.count or count[0] <= 0:
-            return
-        ENDSWITH = Line_Ending()
-        if args.with_sheetname or args.with_filename:
-            print(
-                file,
-                ":",
-                count[0],
-                label + ", ",
-                CELLcount[0],
-                "Cells, ",
-                STRcount[0],
-                "Strings",
-                end=ENDSWITH,
-            )
-        SumOfCELL.extend(CELLcount)
-        SumOfSTR.extend(STRcount)
-        SumOfROW.extend(count)
-
-    def Iterate_Over_Rows(book, file):
-        ROWcount, CELLcount, STRcount = [0], [0], [0]
-        for key, item in book.items():
-            for line in item:
-                AuxFlag = False
-                for cell in line:
-                    if Check_Optional_Args(cell):
-                        if args.count:
-                            AuxFlag = True
-                            CELLcount[0] = CELLcount[0] + 1
-                            Count_Matching_Strings(cell, STRcount)
-                        else:
-                            AuxFlag = True
-                            ROWcount[0] = ROWcount[0] - 1
-
-                if AuxFlag == True:
-                    ROWcount[0] = ROWcount[0] + 1
-                    Show_Filename_And_Sheetname(file, key, line)
-
-        Print_Count_Summary(file, "Rows", ROWcount, CELLcount, STRcount)
-
-    def Iterate_Over_Columns(book, file):
-        COLcount, CELLcount, STRcount = [0], [0], [0]
-        for key, item in book.items():
-            if not item:
-                continue
-            max_cols = max(len(row) for row in item)
-            for col_idx in range(max_cols):
-                column = [
-                    row[col_idx] if col_idx < len(row) else ""
-                    for row in item
-                ]
-                col_has_match = any(
-                    Check_Optional_Args(cell) for cell in column
-                )
-                if not col_has_match:
-                    continue
-
-                COLcount[0] = COLcount[0] + 1
-                if args.count:
-                    for cell in column:
-                        if Check_Optional_Args(cell):
-                            CELLcount[0] = CELLcount[0] + 1
-                            Count_Matching_Strings(cell, STRcount)
-                else:
-                    for cell in column:
-                        Show_Single_Match(file, key, cell)
-
-        Print_Count_Summary(file, "Columns", COLcount, CELLcount, STRcount)
-
-    def Iterate_Over_Cells(book, file):
-        if args.column:
-            Iterate_Over_Columns(book, file)
-        else:
-            Iterate_Over_Rows(book, file)
-
-    # Check files-with-match and files-without-match arguments
-
-    def HyphenlAndHyphenLCheck(book, file):
-        ENDSWITH = "\n"
-        if args.null:
-            ENDSWITH = ""
-
-        if args.files_with_match:
-            if Check_Optional_Args(book):
-                return print(file, end=ENDSWITH)
-
-        elif args.files_without_match:
-            if not Check_Optional_Args(book):
-                return print(file, end=ENDSWITH)
-
-        else:
-
-            Iterate_Over_Cells(book, file)
-
-    # Count matches. Rows, cells and strings.
-
-    def SumOfRowsCellsAndStrings():
-        GROUPS, CELLS, STRINGS = sum(SumOfROW), sum(SumOfCELL), sum(SumOfSTR)
-        group_label = "Columns" if args.column else "Rows"
-        print(
-            "Search results: ",
-            GROUPS,
-            group_label + ", ",
-            CELLS,
-            "Cells, ",
-            STRINGS,
-            "Strings",
-        )
-
-    # Opening files, start searching
-
-    def SEARCH(File_List):
-        for file in File_List:
-            try:
-                if args.debug == True:
-                    warnings.resetwarnings()
-                    print("-- debug mode: " + file)
-
-                if file.endswith((".xlsx", ".XLSX", ".xlsm", ".XLSM")):
-                    book = p.get_book_dict(
-                        file_name=file, skip_hidden_row_and_column=False
-                    )
-
-                else:
-                    book = p.get_book_dict(
-                        file_name=file,
-                    )
-
-                HyphenlAndHyphenLCheck(book, file)
-
-            except KeyboardInterrupt:
-
-                sys.exit(0)
-
-            except:
-                print(
-                    f"Error:\tUnsupported format, password protected or corrupted file: {file}",
-                    file=sys.stderr,
-                )
-                pass
-
-        if args.count:
-            if args.files_with_match or args.files_without_match:
-                pass
-
-            else:
-                SumOfRowsCellsAndStrings()
+        SEARCH(File_List, opts)
 
     File_And_Path_Location()
 
