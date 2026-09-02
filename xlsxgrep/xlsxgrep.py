@@ -15,7 +15,7 @@ import locale
 from textwrap import dedent
 
 __license__ = "MIT"
-__version__ = "0.0.34"
+__version__ = "0.0.35"
 __author__ = "Ivan Cvitic"
 __email__ = "cviticivan@gmail.com"
 VERSION_INFO = [
@@ -26,8 +26,31 @@ VERSION_INFO = [
     "Locale: {0}".format(".".join(str(s) for s in locale.getlocale())),
 ]
 
+POSIX_CLASSES = {
+    "[:alnum:]": r"a-zA-Z0-9",
+    "[:alpha:]": r"a-zA-Z",
+    "[:blank:]": r" \t",
+    "[:cntrl:]": r"\x00-\x1f\x7f",
+    "[:digit:]": r"0-9",
+    "[:graph:]": r"\x21-\x7e",
+    "[:lower:]": r"a-z",
+    "[:print:]": r"\x20-\x7e",
+    "[:punct:]": r"\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e",
+    "[:space:]": r" \t\r\n\v\f",
+    "[:upper:]": r"A-Z",
+    "[:xdigit:]": r"0-9a-fA-F",
+}
+
+
+def translate_posix_ere(pattern):
+    for posix_cls, repl in POSIX_CLASSES.items():
+        pattern = pattern.replace(posix_cls, repl)
+    return pattern
+
 
 def check_optional_args(opts, val):
+    if opts.get("compiled_regex"):
+        return opts["compiled_regex"].search(str(val))
     pattern = opts["PATTERN"]
     if opts["python_regex"]:
         return re.search(r"%s" % pattern, str(val))
@@ -45,15 +68,19 @@ def check_optional_args(opts, val):
 
 
 def count_matching_strings(opts, cell, STRcount):
-    pattern = opts["PATTERN"]
-    re_escaped = re.escape(str(pattern).upper())
-    str_cell = str(cell).upper()
-    if not opts["python_regex"]:
-        for x in re.findall(re_escaped, str_cell):
+    if opts.get("compiled_regex"):
+        for x in opts["compiled_regex"].findall(str(cell)):
             STRcount[0] += 1
     else:
-        for x in re.findall(str(pattern), str(cell)):
-            STRcount[0] += 1
+        pattern = opts["PATTERN"]
+        re_escaped = re.escape(str(pattern).upper())
+        str_cell = str(cell).upper()
+        if not opts["python_regex"]:
+            for x in re.findall(re_escaped, str_cell):
+                STRcount[0] += 1
+        else:
+            for x in re.findall(str(pattern), str(cell)):
+                STRcount[0] += 1
 
 
 def format_line_ending(opts):
@@ -274,12 +301,19 @@ def SEARCH(File_List, opts):
         jobs = os.cpu_count() or 1
 
     def process_result(res):
-        for err in res["stderr"]:
-            sys.stderr.write(err)
-            sys.stderr.flush()
-        for out in res["stdout"]:
-            sys.stdout.write(out)
-            sys.stdout.flush()
+        try:
+            for err in res["stderr"]:
+                sys.stderr.write(err)
+                sys.stderr.flush()
+            for out in res["stdout"]:
+                sys.stdout.write(out)
+                sys.stdout.flush()
+        except BrokenPipeError:
+            try:
+                sys.stderr.close()
+            except Exception:
+                pass
+            sys.exit(0)
         r, c, s = res["counts"]
         if opts["count"] and (r > 0 or c > 0 or s > 0):
             SumOfROW.append(r)
@@ -328,7 +362,8 @@ def main():
 options:
   -h, --help                 show this help message and exit.
   -V, --version              display version information and exit.
-  -P, --python-regex         PATTERN is a Python regular expression. This is the default.
+  -P, --python-regex         PATTERN is a Python regular expression.
+  -E, --extended-regexp      PATTERN is a POSIX extended regular expression (Default).
   -F, --fixed-strings        interpret PATTERN as fixed strings, not regular expressions.
   -i, --ignore-case          ignore case distinctions.
   -w, --word-regexp          force PATTERN to match only whole words.
@@ -348,8 +383,6 @@ options:
 examples:
     xlsxgrep -i "foo" foobar.xlsx
     xlsxgrep -c -H "(?i)foo|bar" /folder
-
-For more details refer to man page.
 """
     parser = argparse.ArgumentParser(
         add_help=False,  # epilog=example_text,
@@ -358,7 +391,7 @@ For more details refer to man page.
         formatter_class=argparse.RawDescriptionHelpFormatter,
         usage=dedent(
             """
-	    xlsxgrep [-h] [-V] [-P] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR] 
+	    xlsxgrep [-h] [-V] [-P] [-E] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR] 
                 [-Z] [-j JOBS] [--row | --column] [-d] PATTTERN FILE [FILE ...]
 
 
@@ -387,6 +420,15 @@ For more details refer to man page.
         "--python-regex",
         help=argparse.SUPPRESS,
         # help="PATTERN is a Python regular expression. This is the default.",
+        required=False,
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "-E",
+        "--extended-regexp",
+        "--extended-regex",
+        help=argparse.SUPPRESS,
         required=False,
         action="store_true",
         default=False,
@@ -562,29 +604,56 @@ For more details refer to man page.
 
     ActivateDebug()
 
-    # Valid Python Regex Check ( Optional Argument -P, --python-regex)
+    # Valid Python / POSIX Regex Check
 
-    def Check_Python_Regex():
-        if args.fixed_strings or args.ignore_case or args.word_regexp:
-            if args.python_regex == True:
+    def Check_Regex():
+        compiled = None
+
+        if args.python_regex:
+            if args.extended_regexp:
                 sys.exit(
-                    "xlsxgrep: --python-regex cannot be used together with: -F, -w or -i"
+                    "xlsxgrep: --python-regex cannot be used together with: -E"
                 )
-            else:
-                args.python_regex = False
-                return args.python_regex
-
-        else:
+            if args.fixed_strings:
+                sys.exit(
+                    "xlsxgrep: --python-regex cannot be used together with: -F"
+                )
             try:
                 args.python_regex = True
-                re.compile(args.PATTERN)
-                pass
+                args.posix_ere = False
+                compiled = re.compile(args.PATTERN)
             except re.error:
-                exit(
+                sys.exit(
                     "Error:  Not valid Python Regular Expression. For fixed strings use flag: -F"
                 )
+            return compiled
 
-    Check_Python_Regex()
+        if args.fixed_strings:
+            if args.extended_regexp:
+                sys.exit(
+                    "xlsxgrep: --fixed-strings cannot be used together with: -E"
+                )
+            args.python_regex = False
+            args.posix_ere = False
+            return compiled
+
+        # Default behavior is POSIX ERE unless Python regex or fixed strings are explicitly selected.
+        args.python_regex = False
+        args.posix_ere = True
+        pattern = translate_posix_ere(args.PATTERN)
+        if args.word_regexp:
+            pattern = r"\b(?:" + pattern + r")\b"
+        flags = re.IGNORECASE if args.ignore_case else 0
+        try:
+            compiled = re.compile(pattern, flags)
+        except re.error:
+            sys.exit(
+                "Error:  Not valid POSIX Extended Regular Expression."
+            )
+
+        return compiled
+
+    compiled_regex = Check_Regex()
 
     # Checking file or folder format and destination
 
@@ -630,7 +699,13 @@ For more details refer to man page.
         opts = {
             "PATTERN": args.PATTERN,
             "python_regex": args.python_regex,
+            "posix_ere": getattr(args, "posix_ere", False),
+            "extended_regexp": args.extended_regexp,
             "fixed_strings": args.fixed_strings,
+            "ignore_case": args.ignore_case,
+            "word_regexp": args.word_regexp,
+            "compiled_regex": compiled_regex,
+            "count": args.count,
             "ignore_case": args.ignore_case,
             "word_regexp": args.word_regexp,
             "count": args.count,
