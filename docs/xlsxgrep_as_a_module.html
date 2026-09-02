@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VQNH7RL9F0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-VQNH7RL9F0');
+  </script>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>xlsxgrep as a Python Module</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="gh-header">
+    <div class="gh-header-inner">
+      <nav class="gh-nav gh-nav-man" aria-label="Global">
+        <a href="https://www.zazuum.org">zazuum.org</a>
+        <a href="index.html">xlsxgrep</a>
+      </nav>
+
+      <div class="gh-header-actions">
+      </div>
+    </div>
+  </header>
+
+  <main class="gh-repo-page">
+    <div class="gh-repo-header">
+      <div class="gh-repo-header-main">
+        <nav class="gh-breadcrumb" aria-label="Breadcrumb">
+          <strong>xlsxgrep / docs / module guide</strong>
+        </nav>
+      </div>
+      <div class="gh-repo-header-actions">
+        <a class="gh-btn gh-btn-outline" href="https://github.com/zazuum/xlsxgrep" target="_blank" rel="noopener noreferrer">Source Code</a>
+        <a class="gh-btn gh-btn-primary" href="https://pypi.org/project/xlsxgrep/" target="_blank" rel="noopener noreferrer">Install on PyPI</a>
+      </div>
+    </div>
+
+    <div class="gh-repo-layout">
+      <article class="gh-readme">
+        <h1>Using xlsxgrep as a Python Module</h1>
+        <p class="gh-readme-lead">
+          In addition to command-line usage, <code>xlsxgrep</code> can be imported directly into Python applications.
+          This guide demonstrates how to invoke search operations programmatically, retrieve structured output, and build interactive tools.
+        </p>
+
+        <h2>Example 1: Standard usage with <code>process_single_file</code> (returns structured results)</h2>
+        <p>Use <code>process_single_file</code> when you want to handle search results programmatically without printing directly to standard output:</p>
+        <pre><code>import xlsxgrep
+
+# Configure search options
+opts = {
+    "PATTERN": "Software",
+    "python_regex": False,
+    "fixed_strings": False,
+    "ignore_case": True,
+    "word_regexp": False,
+    "count": False,
+    "recursive": False,
+    "with_filename": True,
+    "with_sheetname": True,
+    "files_with_match": False,
+    "files_without_match": False,
+    "separator": "\t",
+    "null": False,
+    "debug": False,
+    "row": True,
+    "column": False,
+    "jobs": 1,
+}
+
+# Run search on a single spreadsheet file
+result = xlsxgrep.process_single_file("my_data.xlsx", opts)
+
+# Access formatted output and counts directly
+print("Matching lines:")
+for line in result["stdout"]:
+    print(line.strip())
+
+row_count, cell_count, string_count = result["counts"]
+print(f"Summary: {row_count} rows, {cell_count} cells, {string_count} strings")</code></pre>
+
+        <h2>Example 2: Batch search across multiple files with <code>SEARCH</code></h2>
+        <p>Use <code>SEARCH</code> to run batch operations over a list of files or directories with multi-processing support:</p>
+        <pre><code>import xlsxgrep
+
+files = ["file1.xlsx", "file2.csv", "file3.ods"]
+
+opts = {
+    "PATTERN": "[0-9]+",
+    "python_regex": True,
+    "fixed_strings": False,
+    "ignore_case": False,
+    "word_regexp": False,
+    "count": True,
+    "recursive": False,
+    "with_filename": True,
+    "with_sheetname": False,
+    "files_with_match": False,
+    "files_without_match": False,
+    "separator": "\t",
+    "null": False,
+    "debug": False,
+    "row": True,
+    "column": False,
+    "jobs": 4,  # Use 4 parallel CPU processes
+}
+
+# Prints results directly to stdout/stderr
+xlsxgrep.SEARCH(files, opts)</code></pre>
+
+        <h2>Interactive Script Example</h2>
+        <p>Below is a complete script example that prompts the user for a search pattern, accepts optional inputs, and executes <code>xlsxgrep</code> programmatically:</p>
+        <pre><code>#!/usr/bin/env python3
+import sys
+import xlsxgrep
+
+def run_interactive_xlsxgrep():
+    print(f"=== xlsxgrep v{xlsxgrep.__version__} Interactive Runner ===")
+
+    # 1. Prompt user for pattern
+    pattern = input("Enter search pattern: ").strip()
+    if not pattern:
+        print("Error: Search pattern cannot be empty.")
+        sys.exit(1)
+
+    # 2. Prompt user for file or directory path
+    file_path = input("Enter file or folder path [default: .]: ").strip() or "."
+
+    # 3. Prompt user for search options
+    ignore_case_input = input("Ignore case? (y/N): ").strip().lower()
+    ignore_case = ignore_case_input.startswith("y")
+
+    use_regex_input = input("Use Python Regex? (y/N): ").strip().lower()
+    python_regex = use_regex_input.startswith("y")
+
+    # 4. Build configuration dictionary
+    opts = {
+        "PATTERN": pattern,
+        "python_regex": python_regex,
+        "fixed_strings": not python_regex,
+        "ignore_case": ignore_case,
+        "word_regexp": False,
+        "count": False,
+        "recursive": True,
+        "with_filename": True,
+        "with_sheetname": True,
+        "files_with_match": False,
+        "files_without_match": False,
+        "separator": "\t",
+        "null": False,
+        "debug": False,
+        "row": True,
+        "column": False,
+        "jobs": 0,  # 0 auto-detects CPU cores
+    }
+
+    print("\nRunning search...\n" + "-" * 50)
+
+    # 5. Execute search using imported xlsxgrep
+    results = xlsxgrep.process_single_file(file_path, opts)
+
+    # 6. Display results
+    if results["stdout"]:
+        for line in results["stdout"]:
+            print(line, end="")
+    else:
+        print("No matches found.")
+
+    if results["stderr"]:
+        for err in results["stderr"]:
+            sys.stderr.write(err)
+
+if __name__ == "__main__":
+    run_interactive_xlsxgrep()</code></pre>
+
+        <h3>Sample Interactive Output</h3>
+        <pre><code>=== xlsxgrep v0.0.35 Interactive Runner ===
+Enter search pattern: Software
+Enter file or folder path [default: .]: tests/Financials Sample Data 1.csv
+Ignore case? (y/N): y
+Use Python Regex? (y/N): n
+
+Running search...
+--------------------------------------------------
+tests/Financials Sample Data 1.csv: Financials Sample Data 1.csv:	Sales	Software	USD	2012	Actuals	$90,924,002 ...</code></pre>
+      </article>
+
+      <aside class="gh-repo-sidebar">
+        <h2>About</h2>
+        <p>Use <code>xlsxgrep</code> as a Python module within your custom data processing pipelines and scripts.</p>
+
+        <h3>Details</h3>
+        <ul class="gh-repo-meta">
+          <li><span class="gh-lang-dot gh-lang-python"></span> Python</li>
+          <li>MIT License</li>
+        </ul>
+
+        <h3>Documentation</h3>
+        <ul class="gh-repo-meta">
+          <li><a href="index.html">Homepage</a></li>
+          <li><a href="manual.html">Manual page</a></li>
+        </ul>
+      </aside>
+    </div>
+  </main>
+
+  <div class="gh-back-home">
+    <ul class="gh-repo-meta">
+      <li><a href="index.html">Back to homepage</a></li>
+    </ul>
+  </div>
+
+  <footer class="gh-footer">
+    <div class="gh-footer-inner">
+      <span>&copy; Ivan Cvitic</span>
+      <span class="gh-footer-sep">&middot;</span>
+      <a href="https://www.zazuum.org">www.zazuum.org</a>
+    </div>
+  </footer>
+</body>
+</html>
