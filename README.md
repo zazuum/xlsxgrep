@@ -9,7 +9,7 @@
 
 - Search many XLSX, XLS, XLSM, CSV, TSV and ODS files at once, even recursively in directories.
 
-- Regular expressions: Python regex.
+- Regular expressions: Python regex and POSIX extended regular expressions (-E).
 
 - Supported file types: csv, ods, tsv, xls, xlsx, xlsm.
 
@@ -18,7 +18,7 @@
 ## Usage:
 ```
 
-usage: xlsxgrep [-h] [-V] [-P] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR]
+usage: xlsxgrep [-h] [-V] [-P] [-E] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR]
                 [-Z] [-j JOBS] [--row | --column] [-d] PATTTERN FILE [FILE ...]
 
 positional arguments:
@@ -28,7 +28,8 @@ positional arguments:
 options:
   -h, --help                 show this help message and exit.
   -V, --version              display version information and exit.
-  -P, --python-regex         PATTERN is a Python regular expression. This is the default.
+  -P, --python-regex         PATTERN is a Python regular expression.
+  -E, --extended-regexp      PATTERN is a POSIX extended regular expression (Default).
   -F, --fixed-strings        interpret PATTERN as fixed strings, not regular expressions.
   -i, --ignore-case          ignore case distinctions.
   -w, --word-regexp          force PATTERN to match only whole words.
@@ -44,8 +45,6 @@ options:
   -j, --jobs JOBS            number of CPU cores/processes to use for search (default: 1).
       --row                  search rows and print matching rows (default).
       --column               search columns and print whole matching columns vertically.
-
-For more details refer to man page.
 ```
 
 ## Examples:
