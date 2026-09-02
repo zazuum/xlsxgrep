@@ -1,5 +1,5 @@
 .\" Man page for xlsxgrep
-.TH XLSXGREP 1 "August 2026" "xlsxgrep 0.0.34" "User Commands"
+.TH XLSXGREP 1 "August 2026" "xlsxgrep 0.0.35" "User Commands"
 .SH NAME
 xlsxgrep \- search text in spreadsheet format files
 .SH SYNOPSIS
@@ -30,7 +30,11 @@ Display version information and exit.
 Treat
 .I PATTERN
 as a Python regular expression.
-This is the default.
+.TP
+.BR \-E ", " \-\-extended\-regexp
+Treat
+.I PATTERN
+as a POSIX extended regular expression (Default).
 .TP
 .BR \-F ", " \-\-fixed\-strings
 Treat
