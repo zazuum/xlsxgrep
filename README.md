@@ -9,6 +9,10 @@
 
 - Search many XLSX, XLS, XLSM, CSV, TSV and ODS files at once, even recursively in directories.
 
+- Format-aware spreadsheet output: XLSX/XLSM and XLS numeric cells are rendered
+  using their spreadsheet number format. ODS cells use their stored display text.
+  CSV and TSV values are printed exactly as stored in the source file.
+
 - Regular expressions: Python regex and POSIX extended regular expressions (-E).
 
 - Supported file types: csv, ods, tsv, xls, xlsx, xlsm.
@@ -18,8 +22,10 @@
 ## Usage:
 ```
 
-usage: xlsxgrep [-h] [-V] [-P] [-E] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR]
-                [-Z] [-j JOBS] [--row | --column] [-d] PATTTERN FILE [FILE ...]
+usage: xlsxgrep [-h] [-V] [-P] [-E] [-F] [-i] [-w] [-c] [-r] [-H] [-N]
+                [-l] [-L] [-S SEPARATOR]
+                [-Z] [-j JOBS]
+                [--row | --column] [-d] PATTTERN FILE [FILE ...]
 
 positional arguments:
   PATTERN                    use PATTERN as the pattern to search for.
@@ -40,8 +46,6 @@ options:
   -l, --files-with-match     print only names of FILEs with match pattern.
   -L, --files-without-match  print only names of FILEs with no match pattern.
   -S, --separator SEPARATOR  define custom list separator for output, the default is TAB.
-  -Z, --null                 output a zero byte (the ASCII NUL character) instead of the
-                             usual newline.
   -j, --jobs JOBS            number of CPU cores/processes to use for search (default: 1).
       --row                  search rows and print matching rows (default).
       --column               search columns and print whole matching columns vertically.
@@ -54,6 +58,9 @@ xlsxgrep -i "foo" foobar.xlsx
 ```sh
 xlsxgrep -c -H "(?i)foo|bar" /folder
 ```
+
+For more details refer to the man page.
+
 ## Installation
 
 ```sh
