@@ -10,12 +10,14 @@ import os
 import functools
 from concurrent.futures import ProcessPoolExecutor
 import pyexcel as p
+import xlrd
+from openpyxl import load_workbook
 from pathlib import Path
 import locale
 from textwrap import dedent
 
 __license__ = "MIT"
-__version__ = "0.0.35"
+__version__ = "0.0.36"
 __author__ = "Ivan Cvitic"
 __email__ = "cviticivan@gmail.com"
 VERSION_INFO = [
@@ -141,6 +143,155 @@ def format_filename_and_sheetname(opts, file, active_sheet, linesArray):
             return sep.join(map(str, linesArray)) + endswith
 
 
+def split_number_format(number_format):
+    sections = []
+    section = []
+    in_quotes = False
+    escaped = False
+    for character in number_format:
+        if escaped:
+            section.append(character)
+            escaped = False
+        elif character == "\\":
+            section.append(character)
+            escaped = True
+        elif character == '"':
+            section.append(character)
+            in_quotes = not in_quotes
+        elif character == ";" and not in_quotes:
+            sections.append("".join(section))
+            section = []
+        else:
+            section.append(character)
+    sections.append("".join(section))
+    return sections
+
+
+def excel_format_literal(value):
+    literal = []
+    in_quotes = False
+    index = 0
+    while index < len(value):
+        character = value[index]
+        if character == '"':
+            in_quotes = not in_quotes
+        elif character == "\\" and index + 1 < len(value):
+            index += 1
+            literal.append(value[index])
+        elif character in "_*" and index + 1 < len(value):
+            index += 1
+        elif character != "_" or in_quotes:
+            literal.append(character)
+        index += 1
+    return "".join(literal)
+
+
+def format_excel_number(value, number_format):
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return value
+
+    sections = split_number_format(number_format)
+    if value < 0 and len(sections) > 1:
+        section = sections[1]
+        numeric_value = -value
+    elif value == 0 and len(sections) > 2:
+        section = sections[2]
+        numeric_value = value
+    else:
+        section = sections[0]
+        numeric_value = value
+
+    section = re.sub(r"\[[^]]*\]", "", section)
+    match = re.search(r"[0#?][0#?,]*(?:\.[0#?]+)?", section)
+    if not match:
+        return value
+
+    numeric_pattern = match.group()
+    integer_pattern, _, decimal_pattern = numeric_pattern.partition(".")
+    decimals = len(decimal_pattern)
+    grouping = "," in integer_pattern
+    formatted = f"{numeric_value:,.{decimals}f}" if grouping else f"{numeric_value:.{decimals}f}"
+    if decimal_pattern and "0" not in decimal_pattern:
+        formatted = formatted.rstrip("0").rstrip(".")
+
+    prefix = excel_format_literal(section[: match.start()])
+    suffix = excel_format_literal(section[match.end() :])
+    return prefix + formatted + suffix
+
+
+def get_xlsx_book_dict(file):
+    book = p.get_book_dict(file_name=file, skip_hidden_row_and_column=False)
+    workbook = load_workbook(file, read_only=True, data_only=True)
+    for sheet_name, rows in book.items():
+        worksheet = workbook[sheet_name]
+        for row, cells in zip(rows, worksheet.iter_rows()):
+            for column_index, (value, cell) in enumerate(zip(row, cells)):
+                row[column_index] = format_excel_number(value, cell.number_format)
+    workbook.close()
+    return book
+
+
+def get_xls_book_dict(file):
+    workbook = xlrd.open_workbook(file, formatting_info=True)
+    book = {}
+    for sheet_index in range(workbook.nsheets):
+        sheet = workbook.sheet_by_index(sheet_index)
+        rows = []
+        for row_index in range(sheet.nrows):
+            row = []
+            for col_index in range(sheet.ncols):
+                cell_type = sheet.cell_type(row_index, col_index)
+                value = sheet.cell_value(row_index, col_index)
+                if cell_type == xlrd.XL_CELL_NUMBER:
+                    xf_index = sheet.cell_xf_index(row_index, col_index)
+                    xf = workbook.xf_list[xf_index]
+                    fmt_key = xf.format_key
+                    fmt = workbook.format_map.get(fmt_key)
+                    if fmt is not None and fmt.format_str:
+                        value = format_excel_number(value, fmt.format_str)
+                row.append(value)
+            rows.append(row)
+        book[sheet.name] = rows
+    return book
+
+
+def get_ods_book_dict(file):
+    import zipfile
+    import xml.etree.ElementTree as ET
+
+    with zipfile.ZipFile(file) as zf:
+        root = ET.fromstring(zf.read("content.xml"))
+
+    ns = {
+        "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
+        "table": "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
+        "text": "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
+        "style": "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+    }
+
+    book = {}
+    for table in root.findall('.//table:table', ns):
+        sheet_name = table.get("{urn:oasis:names:tc:opendocument:xmlns:table:1.0}name")
+        rows = []
+        for row in table.findall('table:table-row', ns):
+            values = []
+            for cell in row.findall('table:table-cell', ns):
+                value_type = cell.get('{urn:oasis:names:tc:opendocument:xmlns:office:1.0}value-type')
+                value = cell.get('{urn:oasis:names:tc:opendocument:xmlns:office:1.0}value')
+                if value_type == 'string':
+                    text = ''.join(p.text for p in cell.findall('.//text:p', ns))
+                    values.append(text)
+                elif value_type in ('float', 'currency', 'percentage', 'date', 'time', 'boolean') and value is not None:
+                    text = ''.join(p.text for p in cell.findall('.//text:p', ns))
+                    values.append(text if text else value)
+                else:
+                    text = ''.join(p.text for p in cell.findall('.//text:p', ns))
+                    values.append(text)
+            rows.append(values)
+        book[sheet_name or 'Sheet'] = rows
+    return book
+
+
 def process_single_file(file, opts):
     stdout_lines = []
     stderr_lines = []
@@ -180,9 +331,11 @@ def process_single_file(file, opts):
 
     try:
         if file.endswith((".xlsx", ".XLSX", ".xlsm", ".XLSM")):
-            book = p.get_book_dict(
-                file_name=file, skip_hidden_row_and_column=False
-            )
+            book = get_xlsx_book_dict(file)
+        elif file.endswith((".xls", ".XLS")):
+            book = get_xls_book_dict(file)
+        elif file.endswith((".ods", ".ODS")):
+            book = get_ods_book_dict(file)
         else:
             book = p.get_book_dict(file_name=file)
     except KeyboardInterrupt:
@@ -374,8 +527,6 @@ options:
   -l, --files-with-match     print only names of FILEs with match pattern.
   -L, --files-without-match  print only names of FILEs with no match pattern.
   -S, --separator SEPARATOR  define custom list separator for output, the default is TAB.
-  -Z, --null                 output a zero byte (the ASCII NUL character) instead of the 
-                             usual newline.
   -j, --jobs JOBS            number of CPU cores/processes to use for search (default: 1).
       --row                  search rows and print matching rows (default).
       --column               search columns and print whole matching columns vertically.
@@ -383,6 +534,8 @@ options:
 examples:
     xlsxgrep -i "foo" foobar.xlsx
     xlsxgrep -c -H "(?i)foo|bar" /folder
+
+For more details refer to the man page.
 """
     parser = argparse.ArgumentParser(
         add_help=False,  # epilog=example_text,
@@ -519,7 +672,6 @@ examples:
         "-Z",
         "--null",
         help=argparse.SUPPRESS,
-        # help="output a zero byte (the ASCII NUL character) instead of the usual newline.",
         required=False,
         action="store_true",
     )
