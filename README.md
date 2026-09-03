@@ -23,8 +23,7 @@
 ```
 
 usage: xlsxgrep [-h] [-V] [-P] [-E] [-F] [-i] [-w] [-c] [-r] [-H] [-N]
-                [-l] [-L] [-S SEPARATOR]
-                [-Z] [-j JOBS]
+                [-l] [-L] [-S SEPARATOR] [-Z] [-j JOBS]
                 [--row | --column] [-d] PATTTERN FILE [FILE ...]
 
 positional arguments:
