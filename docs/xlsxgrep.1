@@ -1,5 +1,5 @@
 .\" Man page for xlsxgrep
-.TH XLSXGREP 1 "September 2026" "xlsxgrep 0.0.35" "User Commands"
+.TH XLSXGREP 1 "September 2026" "xlsxgrep 0.0.36" "User Commands"
 .SH NAME
 xlsxgrep \- search text in spreadsheet format files
 .SH SYNOPSIS
@@ -18,6 +18,10 @@ but operates on XLSX, XLS, XLSM, CSV, TSV, and ODS files.
 When a match is found, output depends on the selected search mode.
 In row mode (the default), matching rows are printed with fields separated by a tab.
 In column mode, whole columns containing at least one match are printed vertically, one cell per line.
+.PP
+Numeric cells in XLSX, XLSM, XLS, and ODS files are searched and printed using their spreadsheet display values,
+including number formats such as currency, grouping, and negative-value notation.
+CSV and TSV values are used as stored.
 .SH OPTIONS
 .TP
 .BR \-h ", " \-\-help
