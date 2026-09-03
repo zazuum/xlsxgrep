@@ -35,7 +35,7 @@
       <p class="gh-man-meta">
         <span>XLSXGREP(1)</span>
         <span>User Commands</span>
-        <span>xlsxgrep 0.0.35</span>
+        <span>xlsxgrep 0.0.36</span>
         <span>September 2026</span>
       </p>
     </header>
@@ -61,6 +61,10 @@
           When a match is found, output depends on the selected search mode.
           In row mode (the default), matching rows are printed with fields separated by a tab.
           In column mode, whole columns containing at least one match are printed vertically, one cell per line.
+        </p>
+        <p>
+          Numeric cells in XLSX, XLSM, XLS, and ODS files are searched and printed using their spreadsheet display values,
+          including number formats such as currency, grouping, and negative-value notation. CSV and TSV values are used as stored.
         </p>
       </section>
 

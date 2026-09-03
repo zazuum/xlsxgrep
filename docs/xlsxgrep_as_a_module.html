@@ -47,6 +47,11 @@
           In addition to command-line usage, <code>xlsxgrep</code> can be imported directly into Python applications.
           This guide demonstrates how to invoke search operations programmatically, retrieve structured output, and build interactive tools.
         </p>
+        <p>
+          Structured results use spreadsheet display values for numeric cells in XLSX, XLSM, XLS, and ODS files.
+          For example, a currency cell is returned as its displayed currency text rather than its raw stored number;
+          CSV and TSV values are returned as stored.
+        </p>
 
         <h2>Example 1: Standard usage with <code>process_single_file</code> (returns structured results)</h2>
         <p>Use <code>process_single_file</code> when you want to handle search results programmatically without printing directly to standard output:</p>
@@ -179,7 +184,7 @@ if __name__ == "__main__":
     run_interactive_xlsxgrep()</code></pre>
 
         <h3>Sample Interactive Output</h3>
-        <pre><code>=== xlsxgrep v0.0.35 Interactive Runner ===
+        <pre><code>=== xlsxgrep 0.0.36 Interactive Runner ===
 Enter search pattern: Software
 Enter file or folder path [default: .]: tests/Financials Sample Data 1.csv
 Ignore case? (y/N): y
