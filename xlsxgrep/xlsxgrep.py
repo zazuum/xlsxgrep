@@ -606,7 +606,7 @@ examples:
     xlsxgrep -i "foo" foobar.xlsx
     xlsxgrep -c -H "(?i)foo|bar" /folder
 
-#### For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
+For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
 """
     parser = argparse.ArgumentParser(
         add_help=False,  # epilog=example_text,
