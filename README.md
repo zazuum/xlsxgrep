@@ -58,7 +58,8 @@ xlsxgrep -i "foo" foobar.xlsx
 xlsxgrep -c -H "(?i)foo|bar" /folder
 ```
 
-For more details refer to the man page.
+#### For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
+<br>
 
 ## Installation
 
