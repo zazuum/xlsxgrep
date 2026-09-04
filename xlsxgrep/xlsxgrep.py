@@ -17,7 +17,7 @@ import locale
 from textwrap import dedent
 
 __license__ = "MIT"
-__version__ = "0.0.36"
+__version__ = "0.0.37"
 __author__ = "Ivan Cvitic"
 __email__ = "cviticivan@gmail.com"
 VERSION_INFO = [
@@ -259,37 +259,108 @@ def get_ods_book_dict(file):
     import zipfile
     import xml.etree.ElementTree as ET
 
-    with zipfile.ZipFile(file) as zf:
-        root = ET.fromstring(zf.read("content.xml"))
+    def get_attr(elem, name):
+        for key, val in elem.attrib.items():
+            if key == name or key.endswith("}" + name):
+                return val
+        return None
 
-    ns = {
-        "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
-        "table": "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
-        "text": "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
-        "style": "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
-    }
+    def get_paragraph_text(p_node):
+        parts = []
 
-    book = {}
-    for table in root.findall('.//table:table', ns):
-        sheet_name = table.get("{urn:oasis:names:tc:opendocument:xmlns:table:1.0}name")
-        rows = []
-        for row in table.findall('table:table-row', ns):
-            values = []
-            for cell in row.findall('table:table-cell', ns):
-                value_type = cell.get('{urn:oasis:names:tc:opendocument:xmlns:office:1.0}value-type')
-                value = cell.get('{urn:oasis:names:tc:opendocument:xmlns:office:1.0}value')
-                if value_type == 'string':
-                    text = ''.join(p.text for p in cell.findall('.//text:p', ns))
-                    values.append(text)
-                elif value_type in ('float', 'currency', 'percentage', 'date', 'time', 'boolean') and value is not None:
-                    text = ''.join(p.text for p in cell.findall('.//text:p', ns))
-                    values.append(text if text else value)
+        def _walk(node):
+            if node.text:
+                parts.append(node.text)
+            for child in node:
+                tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+                if tag == "s":
+                    c = get_attr(child, "c") or "1"
+                    try:
+                        count = int(c)
+                    except ValueError:
+                        count = 1
+                    parts.append(" " * count)
+                elif tag == "tab":
+                    parts.append("\t")
+                elif tag == "line-break":
+                    parts.append("\n")
                 else:
-                    text = ''.join(p.text for p in cell.findall('.//text:p', ns))
-                    values.append(text)
-            rows.append(values)
-        book[sheet_name or 'Sheet'] = rows
-    return book
+                    _walk(child)
+                if child.tail:
+                    parts.append(child.tail)
+
+        _walk(p_node)
+        return "".join(parts)
+
+    def extract_cell_text(cell, ns):
+        paragraphs = [get_paragraph_text(p) for p in cell.findall(".//text:p", ns)]
+        return "\n".join(paragraphs) if paragraphs else ""
+
+    try:
+        with zipfile.ZipFile(file) as zf:
+            root = ET.fromstring(zf.read("content.xml"))
+
+        ns = {
+            "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
+            "table": "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
+            "text": "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
+            "style": "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+        }
+
+        book = {}
+        for table in root.findall(".//table:table", ns):
+            sheet_name = get_attr(table, "name") or "Sheet"
+            rows = []
+            for row in table.findall("table:table-row", ns):
+                row_repeated_str = get_attr(row, "number-rows-repeated")
+                row_repeated = int(row_repeated_str) if row_repeated_str else 1
+                values = []
+                for cell in row:
+                    tag = cell.tag.split("}")[-1] if "}" in cell.tag else cell.tag
+                    if tag not in ("table-cell", "covered-table-cell"):
+                        continue
+                    col_repeated_str = get_attr(cell, "number-columns-repeated")
+                    col_repeated = int(col_repeated_str) if col_repeated_str else 1
+                    if tag == "covered-table-cell":
+                        text = ""
+                    else:
+                        text = extract_cell_text(cell, ns)
+                        if not text:
+                            value_type = get_attr(cell, "value-type")
+                            if value_type in ("float", "currency", "percentage"):
+                                val = get_attr(cell, "value")
+                                if val is not None:
+                                    try:
+                                        num = float(val)
+                                        text = int(num) if num.is_integer() else num
+                                    except ValueError:
+                                        text = val
+                                else:
+                                    text = ""
+                            elif value_type == "boolean":
+                                val = get_attr(cell, "boolean-value")
+                                text = val.lower() == "true" if val else ""
+                            elif value_type == "date":
+                                text = get_attr(cell, "date-value") or ""
+                            elif value_type == "time":
+                                text = get_attr(cell, "time-value") or ""
+                            else:
+                                text = ""
+                    values.extend([text] * col_repeated)
+
+                while values and (values[-1] == "" or values[-1] is None):
+                    values.pop()
+
+                for _ in range(row_repeated):
+                    rows.append(list(values))
+
+            while rows and not any(c != "" and c is not None for c in rows[-1]):
+                rows.pop()
+
+            book[sheet_name] = rows
+        return book
+    except Exception:
+        return p.get_book_dict(file_name=file)
 
 
 def process_single_file(file, opts):
@@ -857,9 +928,6 @@ For more details refer to the man page.
             "ignore_case": args.ignore_case,
             "word_regexp": args.word_regexp,
             "compiled_regex": compiled_regex,
-            "count": args.count,
-            "ignore_case": args.ignore_case,
-            "word_regexp": args.word_regexp,
             "count": args.count,
             "recursive": args.recursive,
             "with_filename": args.with_filename,
