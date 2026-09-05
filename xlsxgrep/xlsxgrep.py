@@ -4,6 +4,7 @@
 import sys
 import argparse
 import re
+import csv
 import warnings
 import logging
 import os
@@ -17,7 +18,7 @@ import locale
 from textwrap import dedent
 
 __license__ = "MIT"
-__version__ = "0.0.37"
+__version__ = "0.0.38"
 __author__ = "Ivan Cvitic"
 __email__ = "cviticivan@gmail.com"
 VERSION_INFO = [
@@ -363,6 +364,38 @@ def get_ods_book_dict(file):
         return p.get_book_dict(file_name=file)
 
 
+def get_csv_book_dict(file):
+    delimiter = "\t" if file.endswith((".tsv", ".TSV")) else ","
+    encodings = [
+        "utf-8-sig",
+        locale.getpreferredencoding(False),
+        "cp1252",
+        "latin-1",
+    ]
+    tried = set()
+
+    for encoding in encodings:
+        if not encoding or encoding in tried:
+            continue
+        tried.add(encoding)
+        try:
+            with open(file, newline="", encoding=encoding) as csv_file:
+                return {
+                    Path(file).name: list(
+                        csv.reader(csv_file, delimiter=delimiter)
+                    )
+                }
+        except UnicodeDecodeError:
+            continue
+
+    with open(
+        file, newline="", encoding="utf-8", errors="replace"
+    ) as csv_file:
+        return {
+            Path(file).name: list(csv.reader(csv_file, delimiter=delimiter))
+        }
+
+
 def process_single_file(file, opts):
     stdout_lines = []
     stderr_lines = []
@@ -407,6 +440,8 @@ def process_single_file(file, opts):
             book = get_xls_book_dict(file)
         elif file.endswith((".ods", ".ODS")):
             book = get_ods_book_dict(file)
+        elif file.endswith((".csv", ".CSV", ".tsv", ".TSV")):
+            book = get_csv_book_dict(file)
         else:
             book = p.get_book_dict(file_name=file)
     except KeyboardInterrupt:
