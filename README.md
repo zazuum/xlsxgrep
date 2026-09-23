@@ -77,4 +77,4 @@ pip install xlsxgrep
 ```
 
 Or download a standalone installer or portable binary for Windows, macOS, or
-Linux (`.deb`/`.rpm`/`.pkg.tar.zst`) from the [releases page](docs/releases.html).
+Linux (`.deb`/`.rpm`/`.pkg.tar.zst`) from the [GitHub releases page](https://github.com/zazuum/xlsxgrep/releases).
