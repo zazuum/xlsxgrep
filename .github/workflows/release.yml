@@ -1,0 +1,206 @@
+name: Build release installers
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+  PYINSTALLER_HIDDEN_IMPORTS: >-
+    --collect-all pyexcel
+    --collect-all pyexcel-io
+    --collect-all pyexcel-xls
+    --collect-all pyexcel-xlsx
+    --collect-all pyexcel-odsr
+    --collect-all openpyxl
+    --collect-all xlrd
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: get_version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+  build-linux:
+    needs: version
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+          pip install pyinstaller
+
+      - name: Build standalone binary
+        run: |
+          pyinstaller --onefile --name xlsxgrep \
+            ${{ env.PYINSTALLER_HIDDEN_IMPORTS }} \
+            xlsxgrep/xlsxgrep.py
+
+      - name: Package portable tarball
+        run: |
+          mkdir -p artifacts
+          tar -C dist -czf artifacts/xlsxgrep-${VERSION}-linux-amd64.tar.gz xlsxgrep
+
+      - name: Install fpm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev build-essential rpm
+          sudo gem install --no-document fpm
+
+      - name: Build .deb and .rpm packages
+        run: |
+          mkdir -p pkgroot/usr/bin pkgroot/usr/share/man/man1
+          cp dist/xlsxgrep pkgroot/usr/bin/xlsxgrep
+          gzip -kc docs/xlsxgrep.1 > pkgroot/usr/share/man/man1/xlsxgrep.1.gz
+
+          fpm -s dir -t deb -C pkgroot \
+            --name xlsxgrep --version "${VERSION}" \
+            --architecture amd64 \
+            --description "CLI tool to search text in spreadsheet files" \
+            --url "https://github.com/zazuum/xlsxgrep" \
+            --maintainer "Ivan Cvitic <cviticivan@gmail.com>" \
+            --license MIT \
+            --package artifacts/xlsxgrep-${VERSION}-amd64.deb \
+            usr
+
+          fpm -s dir -t rpm -C pkgroot \
+            --name xlsxgrep --version "${VERSION}" \
+            --architecture x86_64 \
+            --description "CLI tool to search text in spreadsheet files" \
+            --url "https://github.com/zazuum/xlsxgrep" \
+            --maintainer "Ivan Cvitic <cviticivan@gmail.com>" \
+            --license MIT \
+            --package artifacts/xlsxgrep-${VERSION}-1.x86_64.rpm \
+            usr
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: artifacts/*
+
+  build-macos:
+    needs: version
+    runs-on: macos-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+          pip install pyinstaller
+
+      - name: Build standalone binary
+        run: |
+          pyinstaller --onefile --name xlsxgrep \
+            ${{ env.PYINSTALLER_HIDDEN_IMPORTS }} \
+            xlsxgrep/xlsxgrep.py
+
+      - name: Package portable tarball
+        run: |
+          mkdir -p artifacts
+          tar -C dist -czf artifacts/xlsxgrep-${VERSION}-macos-arm64.tar.gz xlsxgrep
+
+      - name: Build .pkg installer
+        run: |
+          mkdir -p pkgroot/usr/local/bin
+          cp dist/xlsxgrep pkgroot/usr/local/bin/xlsxgrep
+          chmod +x pkgroot/usr/local/bin/xlsxgrep
+
+          pkgbuild \
+            --root pkgroot \
+            --identifier org.zazuum.xlsxgrep \
+            --version "${VERSION}" \
+            --install-location / \
+            artifacts/xlsxgrep-${VERSION}-macos-arm64.pkg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-packages
+          path: artifacts/*
+
+  build-windows:
+    needs: version
+    runs-on: windows-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+          pip install pyinstaller
+
+      - name: Build standalone binary
+        shell: bash
+        run: |
+          pyinstaller --onefile --name xlsxgrep \
+            ${{ env.PYINSTALLER_HIDDEN_IMPORTS }} \
+            xlsxgrep/xlsxgrep.py
+
+      - name: Package portable zip
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          (cd dist && 7z a -tzip "../artifacts/xlsxgrep-${VERSION}-windows-amd64.zip" xlsxgrep.exe)
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build Windows installer
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=${{ env.VERSION }} installer\windows\xlsxgrep.iss
+
+      - name: Move installer to artifacts
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          mv installer/windows/Output/xlsxgrep-setup.exe "artifacts/xlsxgrep-${VERSION}-windows-setup.exe"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-packages
+          path: artifacts/*
+
+  release:
+    needs: [build-linux, build-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-artifacts/*
+          generate_release_notes: true
