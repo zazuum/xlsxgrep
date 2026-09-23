@@ -24,6 +24,7 @@ Write-Host "==> [4/6] Running PyInstaller..."
 pyinstaller --noconfirm --clean --onefile --name xlsxgrep `
     --collect-all pyexcel `
     --collect-all pyexcel_io `
+    --hidden-import pyexcel_io.writers `
     --collect-all pyexcel_xls `
     --collect-all pyexcel_xlsx `
     --collect-all pyexcel_odsr `

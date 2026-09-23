@@ -9,7 +9,8 @@ env:
   PYTHON_VERSION: "3.11"
   PYINSTALLER_HIDDEN_IMPORTS: >-
     --collect-all pyexcel
-    --collect-all pyexcel-io
+    --collect-all pyexcel_io
+    --hidden-import pyexcel_io.writers
     --collect-all pyexcel-xls
     --collect-all pyexcel-xlsx
     --collect-all pyexcel-odsr
@@ -23,6 +24,12 @@ jobs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+      - name: Verify source version matches tag
+        run: |
+          expected="${GITHUB_REF_NAME#v}"
+          actual=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' xlsxgrep/xlsxgrep.py)
+          test "$actual" = "$expected"
+          echo "Building xlsxgrep $actual"
       - id: get_version
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
@@ -190,8 +197,10 @@ jobs:
           path: artifacts/*
 
   release:
-    needs: [build-linux, build-macos, build-windows]
+    needs: [build-linux, build-macos, build-windows, publish-pypi]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -203,3 +212,23 @@ jobs:
         with:
           files: dist-artifacts/*
           generate_release_notes: true
+
+  publish-pypi:
+    needs: [build-linux, build-macos, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Build Python package
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
