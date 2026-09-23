@@ -4,6 +4,15 @@
 build/
 dist/
 *.egg-info/
+installer/windows/Output/
+*.spec
+.build-venv/
+package-deb/
+package-rpm/
+package-arch/
+package-macos/
+rpmbuild/
+arch-build/
 
 
 # Environment
