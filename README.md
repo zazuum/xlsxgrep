@@ -9,22 +9,30 @@
 
 - Search many XLSX, XLS, XLSM, CSV, TSV and ODS files at once, even recursively in directories.
 
+- Parallel execution: multi-process search via `-j` / `--jobs`, using all
+  available CPU cores by default.
+
 - Format-aware spreadsheet output: XLSX/XLSM and XLS numeric cells are rendered
   using their spreadsheet number format. ODS cells use their stored display text.
   CSV and TSV values are printed exactly as stored in the source file.
 
 - Regular expressions: Python regex and POSIX extended regular expressions (-E).
 
-- Supported file types: csv, ods, tsv, xls, xlsx, xlsm.
+- Search modes: row mode (`-R` / `--row`, default) prints matching rows;
+  column mode (`-C` / `--column`) prints matching columns vertically. Count
+  mode (`-c`) reports matching rows, columns, cells, and strings.
 
-- Works on all major platforms: Windows, macOS, BSD and Linux,
+- Usable as a module: import `xlsxgrep` into Python code to run searches
+  programmatically and get structured results.
+
+- Works on all major platforms: Windows, macOS, BSD and Linux.
 
 ## Usage:
 ```
 
 usage: xlsxgrep [-h] [-V] [-P] [-E] [-F] [-i] [-w] [-c] [-r] [-H] [-N]
-                [-l] [-L] [-S SEPARATOR] [-Z] [-j JOBS]
-                [--row | --column] [-d] PATTTERN FILE [FILE ...]
+                [-l] [-L] [-S SEPARATOR] [-Z] [-j JOBS] [-p] [-R | -C] 
+                [-d] PATTTERN FILE [FILE ...]
 
 positional arguments:
   PATTERN                    use PATTERN as the pattern to search for.
@@ -45,9 +53,10 @@ options:
   -l, --files-with-match     print only names of FILEs with match pattern.
   -L, --files-without-match  print only names of FILEs with no match pattern.
   -S, --separator SEPARATOR  define custom list separator for output, the default is TAB.
-  -j, --jobs JOBS            number of CPU cores/processes to use for search (default: 1).
-      --row                  search rows and print matching rows (default).
-      --column               search columns and print whole matching columns vertically.
+  -j, --jobs JOBS            number of CPU cores to use for search (default: all cores).
+  -p, --progress             display a progress bar during the search.
+  -R, --row                  search rows and print matching rows (default).
+  -C, --column               search columns and print whole matching columns vertically.
 ```
 
 ## Examples:
@@ -66,3 +75,6 @@ xlsxgrep -c -H "(?i)foo|bar" /folder
 ```sh
 pip install xlsxgrep
 ```
+
+Or download a standalone installer or portable binary for Windows, macOS, or
+Linux (`.deb`/`.rpm`/`.pkg.tar.zst`) from the [releases page](docs/releases.html).
