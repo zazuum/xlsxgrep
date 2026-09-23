@@ -1,5 +1,5 @@
 .\" Man page for xlsxgrep
-.TH XLSXGREP 1 "September 2026" "xlsxgrep 0.0.38" "User Commands"
+.TH XLSXGREP 1 "September 2026" "xlsxgrep 0.0.39" "User Commands"
 .SH NAME
 xlsxgrep \- search text in spreadsheet format files
 .SH SYNOPSIS
@@ -57,6 +57,8 @@ to match only whole words.
 .TP
 .BR \-c ", " \-\-count
 Print only a count of matches per file.
+The count line always reports matching rows, matching columns, matched cells, and matched strings, regardless of the selected search mode.
+A final summary line reports totals across all files searched.
 .TP
 .BR \-r ", " \-\-recursive
 Search directories recursively.
@@ -85,14 +87,18 @@ Output a zero byte (ASCII NUL) instead of the usual newline after each match.
 .TP
 .BI \-j " JOBS"
 .BI \-\-jobs " JOBS"
-Number of parallel search jobs/processes (default is 1).
+Number of parallel search jobs/processes (default is all available CPU cores).
 Use 0 to auto-detect available CPU cores.
 .TP
-.B \-\-row
+.BR \-p ", " \-\-progress
+Display a progress bar on standard error while files are being searched.
+The progress bar is not part of the search output and is cleared once the search completes.
+.TP
+.BR \-R ", " \-\-row
 Search rows and print matching rows.
 This is the default search mode.
 .TP
-.B \-\-column
+.BR \-C ", " \-\-column
 Search columns and print whole matching columns vertically.
 .SH SEARCH MODES
 .TP
@@ -130,7 +136,15 @@ Search columns and print matching columns vertically:
 .PP
 .RS
 .nf
-xlsxgrep \-\-column "error" report.xlsx
+xlsxgrep \-C "error" report.xlsx
+.fi
+.RE
+.PP
+Show a progress bar while recursively searching a large folder:
+.PP
+.RS
+.nf
+xlsxgrep \-p \-r "error" /folder
 .fi
 .RE
 .SH EXIT STATUS

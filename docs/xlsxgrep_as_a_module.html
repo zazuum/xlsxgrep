@@ -13,8 +13,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>xlsxgrep as a Python Module</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="theme.js"></script>
+  <script src="sheet-grid.js" defer></script>
 </head>
 <body>
+  <div class="gh-sheet-chrome" aria-hidden="true">
+    <div class="gh-sheet-corner"></div>
+    <div class="gh-sheet-col-headers" id="sheet-col-headers"></div>
+    <div class="gh-sheet-row-headers" id="sheet-row-headers"></div>
+  </div>
   <header class="gh-header">
     <div class="gh-header-inner">
       <nav class="gh-nav gh-nav-man" aria-label="Global">
@@ -23,6 +30,11 @@
       </nav>
 
       <div class="gh-header-actions">
+        <select id="theme-select" class="gh-theme-select" aria-label="Select color theme">
+          <option value="light">Light theme</option>
+          <option value="default">Default theme</option>
+          <option value="dark">Dark theme</option>
+        </select>
       </div>
     </div>
   </header>
@@ -30,13 +42,18 @@
   <main class="gh-repo-page">
     <div class="gh-repo-header">
       <div class="gh-repo-header-main">
-        <nav class="gh-breadcrumb" aria-label="Breadcrumb">
-          <strong>xlsxgrep / docs / module guide</strong>
+        <nav class="gh-sitemap" aria-label="Site pages">
+          <span class="gh-sitemap-label">Pages:</span>
+          <a href="index.html">Home</a>
+          <a href="manual.html">Manual</a>
+          <a href="xlsxgrep_as_a_module.html" class="is-active" aria-current="page">Module Guide</a>
+          <a href="releases.html">Releases</a>
         </nav>
       </div>
       <div class="gh-repo-header-actions">
         <a class="gh-btn gh-btn-outline" href="https://github.com/zazuum/xlsxgrep" target="_blank" rel="noopener noreferrer">Source Code</a>
-        <a class="gh-btn gh-btn-primary" href="https://pypi.org/project/xlsxgrep/" target="_blank" rel="noopener noreferrer">Install on PyPI</a>
+        <a class="gh-btn gh-btn-outline" href="https://pypi.org/project/xlsxgrep/" target="_blank" rel="noopener noreferrer">Install on PyPI</a>
+        <a class="gh-btn gh-btn-primary" href="releases.html">Downloads</a>
       </div>
     </div>
 
@@ -76,6 +93,7 @@ opts = {
     "row": True,
     "column": False,
     "jobs": 1,
+    "progress": False,
 }
 
 # Run search on a single spreadsheet file
@@ -86,8 +104,8 @@ print("Matching lines:")
 for line in result["stdout"]:
     print(line.strip())
 
-row_count, cell_count, string_count = result["counts"]
-print(f"Summary: {row_count} rows, {cell_count} cells, {string_count} strings")</code></pre>
+row_count, col_count, cell_count, string_count = result["counts"]
+print(f"Summary: {row_count} rows, {col_count} columns, {cell_count} cells, {string_count} strings")</code></pre>
 
         <h2>Example 2: Batch search across multiple files with <code>SEARCH</code></h2>
         <p>Use <code>SEARCH</code> to run batch operations over a list of files or directories with multi-processing support:</p>
@@ -113,6 +131,7 @@ opts = {
     "row": True,
     "column": False,
     "jobs": 4,  # Use 4 parallel CPU processes
+    "progress": False,
 }
 
 # Prints results directly to stdout/stderr
@@ -162,6 +181,7 @@ def run_interactive_xlsxgrep():
         "row": True,
         "column": False,
         "jobs": 0,  # 0 auto-detects CPU cores
+        "progress": False,
     }
 
     print("\nRunning search...\n" + "-" * 50)
@@ -184,7 +204,7 @@ if __name__ == "__main__":
     run_interactive_xlsxgrep()</code></pre>
 
         <h3>Sample Interactive Output</h3>
-        <pre><code>=== xlsxgrep 0.0.38 Interactive Runner ===
+        <pre><code>=== xlsxgrep 0.0.39 Interactive Runner ===
 Enter search pattern: Software
 Enter file or folder path [default: .]: tests/Financials Sample Data 1.csv
 Ignore case? (y/N): y
@@ -209,6 +229,7 @@ tests/Financials Sample Data 1.csv: Financials Sample Data 1.csv:	Sales	Software
         <ul class="gh-repo-meta">
           <li><a href="index.html">Homepage</a></li>
           <li><a href="manual.html">Manual page</a></li>
+          <li><a href="releases.html">Releases</a></li>
         </ul>
       </aside>
     </div>

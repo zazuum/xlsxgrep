@@ -1,6 +1,34 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
+  --ink: #172437;
+  --muted: #617089;
+  --soft: #7c8aa0;
+  --line: #dce3ed;
+  --panel: #ffffff;
+  --panel-deep: #f7f9fc;
+  --blue: #1463df;
+  --yellow: #10233f;
+  --bg: #eaf2ff;
+  --header-bg: #c4d7f2;
+  --footer-bg: var(--panel-deep);
+  --btn-border: #8ba0c4;
+  --btn-outline-color: var(--ink);
+  --btn-outline-bg: rgba(0, 0, 0, 0.03);
+  --btn-outline-bg-hover: rgba(0, 0, 0, 0.06);
+  --btn-primary-color: #ffffff;
+  --code-bg: rgba(175, 184, 193, 0.2);
+  --code-color: var(--yellow);
+  --pre-bg: var(--panel-deep);
+  --grid-color: rgba(9, 105, 218, 0.22);
+  --grid-opacity: 0.9;
+  --max: 1240px;
+  --content-max: 1120px;
+  --sans: 'Space Grotesk', 'Trebuchet MS', sans-serif;
+  --mono: 'DM Mono', 'Courier New', monospace;
+}
+
+:root[data-theme="default"] {
   --ink: #f7fbff;
   --muted: #a9c4d4;
   --soft: #6f94a8;
@@ -10,10 +38,40 @@
   --blue: #80cbc4;
   --yellow: #ffc600;
   --bg: #193549;
-  --max: 1240px;
-  --content-max: 1120px;
-  --sans: 'Space Grotesk', 'Trebuchet MS', sans-serif;
-  --mono: 'DM Mono', 'Courier New', monospace;
+  --header-bg: rgba(18, 43, 61, 0.82);
+  --footer-bg: rgba(18, 43, 61, 0.7);
+  --btn-outline-color: var(--ink);
+  --btn-outline-bg: rgba(18, 43, 61, 0.72);
+  --btn-outline-bg-hover: rgba(18, 43, 61, 0.95);
+  --btn-primary-color: var(--panel-deep);
+  --code-bg: rgba(18, 43, 61, 0.58);
+  --code-color: var(--blue);
+  --pre-bg: rgba(18, 43, 61, 0.9);
+  --grid-color: rgba(128, 203, 196, 0.28);
+  --grid-opacity: 0.55;
+}
+
+:root[data-theme="dark"] {
+  --ink: #c0caf5;
+  --muted: #a9b1d6;
+  --soft: #565f89;
+  --line: rgba(192, 202, 245, 0.14);
+  --panel: #24283b;
+  --panel-deep: #16161e;
+  --blue: #7aa2f7;
+  --yellow: #e0af68;
+  --bg: #1a1b26;
+  --header-bg: rgba(26, 27, 38, 0.88);
+  --footer-bg: rgba(22, 22, 30, 0.94);
+  --btn-outline-color: var(--ink);
+  --btn-outline-bg: rgba(36, 40, 59, 0.72);
+  --btn-outline-bg-hover: rgba(65, 72, 104, 0.72);
+  --btn-primary-color: var(--panel-deep);
+  --code-bg: rgba(36, 40, 59, 0.72);
+  --code-color: var(--yellow);
+  --pre-bg: #16161e;
+  --grid-color: rgba(122, 162, 247, 0.16);
+  --grid-opacity: 0.65;
 }
 
 *,
@@ -38,13 +96,66 @@ body {
 body::before {
   position: fixed;
   z-index: -1;
-  inset: 0;
+  top: 76px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   content: '';
-  opacity: 0.2;
-  background-image: linear-gradient(rgba(128, 203, 196, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(128, 203, 196, 0.08) 1px, transparent 1px);
-  background-size: 48px 48px;
+  opacity: var(--grid-opacity);
+  background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 96px 24px;
   mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
   pointer-events: none;
+}
+
+.gh-sheet-chrome {
+  position: fixed;
+  z-index: -1;
+  top: 76px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: var(--grid-opacity);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
+  pointer-events: none;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--grid-color);
+}
+
+.gh-sheet-col-headers {
+  position: absolute;
+  top: 0;
+  left: 96px;
+  display: flex;
+}
+
+.gh-sheet-row-headers {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gh-sheet-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 96px;
+  height: 24px;
+}
+
+.gh-sheet-col-headers span,
+.gh-sheet-row-headers span {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 24px;
 }
 
 a {
@@ -54,6 +165,12 @@ a {
 
 a:hover {
   color: var(--yellow);
+}
+
+.gh-readme p a,
+.gh-man-section p a {
+  color: var(--blue);
+  text-decoration: underline;
 }
 
 h1,
@@ -72,9 +189,9 @@ var {
 code {
   padding: 0.16em 0.36em;
   border: 1px solid var(--line);
-  background: rgba(18, 43, 61, 0.58);
+  background: var(--code-bg);
   border-radius: 4px;
-  color: var(--blue);
+  color: var(--code-color);
   font-size: 0.95em;
 }
 
@@ -84,7 +201,7 @@ pre {
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: 0;
-  background: rgba(18, 43, 61, 0.9);
+  background: var(--pre-bg);
   color: var(--ink);
   font-size: 14px;
   line-height: 1.55;
@@ -102,7 +219,7 @@ pre code {
   top: 0;
   z-index: 20;
   border-bottom: 1px solid var(--line);
-  background: rgba(18, 43, 61, 0.82);
+  background: var(--header-bg);
   backdrop-filter: blur(14px);
 }
 
@@ -119,7 +236,8 @@ pre code {
   align-items: center;
   gap: 18px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 16px;
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -137,6 +255,26 @@ pre code {
   margin-right: auto;
 }
 
+.gh-theme-select {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--btn-outline-bg);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.gh-theme-select:hover,
+.gh-theme-select:focus {
+  color: var(--yellow);
+  border-color: var(--yellow);
+  outline: none;
+}
+
 .gh-header-actions {
   display: flex;
   align-items: center;
@@ -149,7 +287,7 @@ pre code {
   justify-content: center;
   min-height: 40px;
   padding: 8px 14px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--btn-border, var(--line));
   border-radius: 0;
   font-weight: 600;
   font-size: 14px;
@@ -157,12 +295,12 @@ pre code {
 }
 
 .gh-btn-outline {
-  color: var(--ink);
-  background: rgba(18, 43, 61, 0.72);
+  color: var(--btn-outline-color);
+  background: var(--btn-outline-bg);
 }
 
 .gh-btn-primary {
-  color: var(--panel-deep);
+  color: var(--btn-primary-color);
   border-color: transparent;
   background: var(--yellow);
 }
@@ -170,11 +308,11 @@ pre code {
 .gh-btn-outline:hover {
   color: var(--yellow);
   border-color: var(--yellow);
-  background: rgba(18, 43, 61, 0.95);
+  background: var(--btn-outline-bg-hover);
 }
 
 .gh-btn-primary:hover {
-  color: var(--panel-deep);
+  color: var(--btn-primary-color);
   background: var(--blue);
 }
 
@@ -217,6 +355,40 @@ pre code {
   font-weight: 500;
 }
 
+.gh-sitemap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gh-sitemap-label {
+  color: var(--soft);
+}
+
+.gh-sitemap a {
+  color: var(--muted);
+  padding: 3px 8px;
+  border: 1px solid var(--btn-border, var(--line));
+}
+
+.gh-sitemap a:hover {
+  color: var(--yellow);
+  border-color: var(--yellow);
+}
+
+.gh-sitemap a.is-active {
+  color: var(--panel-deep);
+  background: var(--yellow);
+  border-color: var(--yellow);
+  pointer-events: none;
+}
+
 .gh-repo-header-actions {
   display: flex;
   flex-wrap: wrap;
@@ -243,7 +415,8 @@ pre code {
   padding: 28px;
 }
 
-.gh-readme h1 {
+.gh-readme h1,
+.gh-man-body h1 {
   margin-bottom: 20px;
   color: var(--yellow);
   font-size: clamp(34px, 5vw, 52px);
@@ -341,7 +514,7 @@ pre code {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
-  margin: 12px 0 0;
+  margin: 0 0 28px;
   color: var(--soft);
   font-family: var(--mono);
   font-size: 11px;
@@ -409,10 +582,160 @@ pre code {
   margin: 0;
 }
 
+.gh-release-status {
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.gh-release-status.error {
+  color: var(--yellow);
+}
+
+.gh-release-list {
+  display: grid;
+  gap: 20px;
+}
+
+.gh-release {
+  padding: 28px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.gh-release-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.gh-release-head h2 {
+  margin: 0 0 7px;
+  color: var(--yellow);
+  font-size: 22px;
+}
+
+.gh-release-date {
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.gh-release-link {
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.gh-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.gh-platform-group {
+  min-width: 0;
+}
+
+.gh-platform-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.gh-platform-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  background: var(--panel-deep);
+  color: var(--yellow);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.gh-asset-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.gh-asset {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 92px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  background: var(--panel-deep);
+}
+
+.gh-asset-name {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.gh-asset-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  margin-top: 13px;
+  padding: 0 10px;
+  background: var(--yellow);
+  color: var(--btn-primary-color);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gh-release-empty {
+  padding: 28px;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  background: var(--panel);
+}
+
+@media (max-width: 900px) {
+  .gh-platform-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .gh-release {
+    padding: 20px;
+  }
+
+  .gh-release-head {
+    display: block;
+  }
+
+  .gh-release-link {
+    display: inline-block;
+    margin-top: 12px;
+  }
+
+  .gh-platform-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .gh-footer {
   padding: 26px 0 34px;
   border-top: 1px solid var(--line);
-  background: rgba(18, 43, 61, 0.7);
+  background: var(--footer-bg);
 }
 
 .gh-footer-inner {
@@ -450,6 +773,11 @@ pre code {
   .gh-header-inner {
     min-height: 64px;
     width: min(calc(100% - 32px), var(--max));
+  }
+
+  .gh-sheet-chrome,
+  body::before {
+    top: 64px;
   }
 
   .gh-repo-page,

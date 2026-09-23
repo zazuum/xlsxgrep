@@ -18,7 +18,7 @@ import locale
 from textwrap import dedent
 
 __license__ = "MIT"
-__version__ = "0.0.38"
+__version__ = "0.0.39"
 __author__ = "Ivan Cvitic"
 __email__ = "cviticivan@gmail.com"
 VERSION_INFO = [
@@ -399,7 +399,7 @@ def get_csv_book_dict(file):
 def process_single_file(file, opts):
     stdout_lines = []
     stderr_lines = []
-    SumOfROW, SumOfCELL, SumOfSTR = [0], [0], [0]
+    SumOfROW, SumOfCOL, SumOfCELL, SumOfSTR = [0], [0], [0], [0]
 
     if not opts["debug"]:
         warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
@@ -454,7 +454,7 @@ def process_single_file(file, opts):
             "file": file,
             "stdout": stdout_lines,
             "stderr": stderr_lines,
-            "counts": (0, 0, 0),
+            "counts": (0, 0, 0, 0),
         }
 
     endswith = format_line_ending(opts)
@@ -466,7 +466,7 @@ def process_single_file(file, opts):
             "file": file,
             "stdout": stdout_lines,
             "stderr": stderr_lines,
-            "counts": (0, 0, 0),
+            "counts": (0, 0, 0, 0),
         }
     elif opts["files_without_match"]:
         if not check_optional_args(opts, book):
@@ -475,11 +475,44 @@ def process_single_file(file, opts):
             "file": file,
             "stdout": stdout_lines,
             "stderr": stderr_lines,
-            "counts": (0, 0, 0),
+            "counts": (0, 0, 0, 0),
         }
 
-    if opts["column"]:
-        COLcount, CELLcount, STRcount = [0], [0], [0]
+    if opts["count"]:
+        # Count mode always reports both matching rows and matching columns, regardless of --row/--column mode.
+        ROWcount, COLcount, CELLcount, STRcount = [0], [0], [0], [0]
+        for key, item in book.items():
+            for line in item:
+                row_has_match = False
+                for cell in line:
+                    if check_optional_args(opts, cell):
+                        row_has_match = True
+                        CELLcount[0] += 1
+                        count_matching_strings(opts, cell, STRcount)
+                if row_has_match:
+                    ROWcount[0] += 1
+
+            if not item:
+                continue
+            max_cols = max(len(row) for row in item)
+            for col_idx in range(max_cols):
+                column = [
+                    row[col_idx] if col_idx < len(row) else ""
+                    for row in item
+                ]
+                if any(check_optional_args(opts, cell) for cell in column):
+                    COLcount[0] += 1
+
+        if ROWcount[0] > 0 or COLcount[0] > 0:
+            if opts["with_sheetname"] or opts["with_filename"]:
+                stdout_lines.append(
+                    f"{file} : {ROWcount[0]} Rows,  {COLcount[0]} Columns,  {CELLcount[0]} Cells,  {STRcount[0]} Strings{endswith}"
+                )
+            SumOfROW[0] = ROWcount[0]
+            SumOfCOL[0] = COLcount[0]
+            SumOfCELL[0] = CELLcount[0]
+            SumOfSTR[0] = STRcount[0]
+    elif opts["column"]:
         for key, item in book.items():
             if not item:
                 continue
@@ -495,72 +528,56 @@ def process_single_file(file, opts):
                 if not col_has_match:
                     continue
 
-                COLcount[0] += 1
-                if opts["count"]:
-                    for cell in column:
-                        if check_optional_args(opts, cell):
-                            CELLcount[0] += 1
-                            count_matching_strings(opts, cell, STRcount)
-                else:
-                    for cell in column:
-                        out = format_single_match(opts, file, key, cell)
-                        if out:
-                            stdout_lines.append(out)
-
-        if opts["count"] and COLcount[0] > 0:
-            if opts["with_sheetname"] or opts["with_filename"]:
-                stdout_lines.append(
-                    f"{file} : {COLcount[0]} Columns,  {CELLcount[0]} Cells,  {STRcount[0]} Strings{endswith}"
-                )
-            SumOfROW[0] = COLcount[0]
-            SumOfCELL[0] = CELLcount[0]
-            SumOfSTR[0] = STRcount[0]
+                for cell in column:
+                    out = format_single_match(opts, file, key, cell)
+                    if out:
+                        stdout_lines.append(out)
     else:
-        ROWcount, CELLcount, STRcount = [0], [0], [0]
         for key, item in book.items():
             for line in item:
-                AuxFlag = False
-                for cell in line:
-                    if check_optional_args(opts, cell):
-                        if opts["count"]:
-                            AuxFlag = True
-                            CELLcount[0] += 1
-                            count_matching_strings(opts, cell, STRcount)
-                        else:
-                            AuxFlag = True
-                            ROWcount[0] -= 1
-
+                AuxFlag = any(check_optional_args(opts, cell) for cell in line)
                 if AuxFlag:
-                    ROWcount[0] += 1
                     out = format_filename_and_sheetname(opts, file, key, line)
                     if out:
                         stdout_lines.append(out)
-
-        if opts["count"] and ROWcount[0] > 0:
-            if opts["with_sheetname"] or opts["with_filename"]:
-                stdout_lines.append(
-                    f"{file} : {ROWcount[0]} Rows,  {CELLcount[0]} Cells,  {STRcount[0]} Strings{endswith}"
-                )
-            SumOfROW[0] = ROWcount[0]
-            SumOfCELL[0] = CELLcount[0]
-            SumOfSTR[0] = STRcount[0]
 
     return {
         "file": file,
         "stdout": stdout_lines,
         "stderr": stderr_lines,
-        "counts": (SumOfROW[0], SumOfCELL[0], SumOfSTR[0]),
+        "counts": (SumOfROW[0], SumOfCOL[0], SumOfCELL[0], SumOfSTR[0]),
     }
 
 
 def SEARCH(File_List, opts):
-    SumOfROW, SumOfCELL, SumOfSTR = [], [], []
+    SumOfROW, SumOfCOL, SumOfCELL, SumOfSTR = [], [], [], []
     jobs = opts.get("jobs", 1)
     if jobs <= 0:
         jobs = os.cpu_count() or 1
 
+    total_files = len(File_List)
+    processed_files = [0]
+    show_progress = opts.get("progress", False)
+
+    def clear_progress_line():
+        if show_progress:
+            sys.stderr.write("\r" + " " * 60 + "\r")
+
+    def draw_progress():
+        if not show_progress:
+            return
+        bar_width = 30
+        filled = int(bar_width * processed_files[0] / total_files) if total_files else bar_width
+        bar = "#" * filled + "-" * (bar_width - filled)
+        pct = int(100 * processed_files[0] / total_files) if total_files else 100
+        sys.stderr.write(
+            f"\r[{bar}] {processed_files[0]}/{total_files} files ({pct}%)"
+        )
+        sys.stderr.flush()
+
     def process_result(res):
         try:
+            clear_progress_line()
             for err in res["stderr"]:
                 sys.stderr.write(err)
                 sys.stderr.flush()
@@ -573,9 +590,12 @@ def SEARCH(File_List, opts):
             except Exception:
                 pass
             sys.exit(0)
-        r, c, s = res["counts"]
-        if opts["count"] and (r > 0 or c > 0 or s > 0):
+        processed_files[0] += 1
+        draw_progress()
+        r, col, c, s = res["counts"]
+        if opts["count"] and (r > 0 or col > 0 or c > 0 or s > 0):
             SumOfROW.append(r)
+            SumOfCOL.append(col)
             SumOfCELL.append(c)
             SumOfSTR.append(s)
 
@@ -597,18 +617,22 @@ def SEARCH(File_List, opts):
             except KeyboardInterrupt:
                 sys.exit(0)
 
+    clear_progress_line()
+    sys.stderr.flush()
+
     if opts["count"]:
         if not (opts["files_with_match"] or opts["files_without_match"]):
-            GROUPS, CELLS, STRINGS = sum(SumOfROW), sum(SumOfCELL), sum(SumOfSTR)
-            group_label = "Columns" if opts["column"] else "Rows"
+            ROWS, COLS, CELLS, STRINGS = (
+                sum(SumOfROW),
+                sum(SumOfCOL),
+                sum(SumOfCELL),
+                sum(SumOfSTR),
+            )
+            file_label = "file" if len(File_List) == 1 else "files"
             print(
-                "Search results: ",
-                GROUPS,
-                group_label + ", ",
-                CELLS,
-                "Cells, ",
-                STRINGS,
-                "Strings",
+                f"Search completed: {ROWS} rows, {COLS} columns, "
+                f"{CELLS} cells, {STRINGS} strings matched in "
+                f"{len(File_List)} {file_label}."
             )
 
 
@@ -633,9 +657,10 @@ options:
   -l, --files-with-match     print only names of FILEs with match pattern.
   -L, --files-without-match  print only names of FILEs with no match pattern.
   -S, --separator SEPARATOR  define custom list separator for output, the default is TAB.
-  -j, --jobs JOBS            number of CPU cores/processes to use for search (default: 1).
-      --row                  search rows and print matching rows (default).
-      --column               search columns and print whole matching columns vertically.
+  -j, --jobs JOBS            number of CPU cores to use for search (default: all cores).
+  -p, --progress             display a progress bar during the search.
+  -R, --row                  search rows and print matching rows (default).
+  -C, --column               search columns and print whole matching columns vertically.
 
 examples:
     xlsxgrep -i "foo" foobar.xlsx
@@ -651,7 +676,7 @@ For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
         usage=dedent(
             """
 	    xlsxgrep [-h] [-V] [-P] [-E] [-F] [-i] [-w] [-c] [-r] [-H] [-N] [-l] [-L] [-S SEPARATOR] 
-                [-Z] [-j JOBS] [--row | --column] [-d] PATTTERN FILE [FILE ...]
+                [-Z] [-j JOBS] [-p] [-R | -C] [-d] PATTTERN FILE [FILE ...]
 
 
             """
@@ -786,7 +811,7 @@ For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
         "--jobs",
         help=argparse.SUPPRESS,
         required=False,
-        default=1,
+        default=os.cpu_count() or 1,
         type=int,
     )
     parser.add_argument(
@@ -797,13 +822,23 @@ For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
         default=False,
         action="store_true",
     )
+    parser.add_argument(
+        "-p",
+        "--progress",
+        help=argparse.SUPPRESS,
+        # help="display a progress bar during the search (not part of the search output).",
+        required=False,
+        action="store_true",
+    )
     search_mode = parser.add_mutually_exclusive_group()
     search_mode.add_argument(
+        "-R",
         "--row",
         help=argparse.SUPPRESS,
         action="store_true",
     )
     search_mode.add_argument(
+        "-C",
         "--column",
         help=argparse.SUPPRESS,
         action="store_true",
@@ -975,6 +1010,7 @@ For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
             "row": args.row,
             "column": args.column,
             "jobs": args.jobs,
+            "progress": args.progress,
         }
 
         SEARCH(File_List, opts)

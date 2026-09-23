@@ -13,8 +13,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>xlsxgrep(1) — manual page</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="theme.js"></script>
+  <script src="sheet-grid.js" defer></script>
 </head>
 <body>
+  <div class="gh-sheet-chrome" aria-hidden="true">
+    <div class="gh-sheet-corner"></div>
+    <div class="gh-sheet-col-headers" id="sheet-col-headers"></div>
+    <div class="gh-sheet-row-headers" id="sheet-row-headers"></div>
+  </div>
   <header class="gh-header">
     <div class="gh-header-inner">
       <nav class="gh-nav gh-nav-man" aria-label="Global">
@@ -23,24 +30,42 @@
       </nav>
 
       <div class="gh-header-actions">
+        <select id="theme-select" class="gh-theme-select" aria-label="Select color theme">
+          <option value="light">Light theme</option>
+          <option value="default">Default theme</option>
+          <option value="dark">Dark theme</option>
+        </select>
       </div>
     </div>
   </header>
 
   <main class="gh-man-page">
-    <header class="gh-man-header">
-      <nav class="gh-breadcrumb" aria-label="Breadcrumb">
-        <strong> xlsxgrep / docs / manual</strong>
-      </nav>
+    <div class="gh-repo-header">
+      <div class="gh-repo-header-main">
+        <nav class="gh-sitemap" aria-label="Site pages">
+          <span class="gh-sitemap-label">Pages:</span>
+          <a href="index.html">Home</a>
+          <a href="manual.html" class="is-active" aria-current="page">Manual</a>
+          <a href="xlsxgrep_as_a_module.html">Module Guide</a>
+          <a href="releases.html">Releases</a>
+        </nav>
+      </div>
+      <div class="gh-repo-header-actions">
+        <a class="gh-btn gh-btn-outline" href="https://github.com/zazuum/xlsxgrep" target="_blank" rel="noopener noreferrer">Source Code</a>
+        <a class="gh-btn gh-btn-outline" href="https://pypi.org/project/xlsxgrep/" target="_blank" rel="noopener noreferrer">Install on PyPI</a>
+        <a class="gh-btn gh-btn-primary" href="releases.html">Downloads</a>
+      </div>
+    </div>
+
+    <article class="gh-man-body">
+      <h1>xlsxgrep(1) — Manual Page</h1>
       <p class="gh-man-meta">
         <span>XLSXGREP(1)</span>
         <span>User Commands</span>
-        <span>xlsxgrep 0.0.38</span>
+        <span>xlsxgrep 0.0.39</span>
         <span>September 2026</span>
       </p>
-    </header>
 
-    <article class="gh-man-body">
       <section class="gh-man-section" id="name">
         <h2>Name</h2>
         <p><strong>xlsxgrep</strong> — search text in spreadsheet files</p>
@@ -93,7 +118,7 @@
           <dd>Force <var>PATTERN</var> to match only whole words.</dd>
 
           <dt><code>-c</code>, <code>--count</code></dt>
-          <dd>Print only a count of matches per file.</dd>
+          <dd>Print only a count of matches per file. The count line always reports matching rows, matching columns, matched cells, and matched strings, regardless of the selected search mode. A final summary line reports totals across all files searched.</dd>
 
           <dt><code>-r</code>, <code>--recursive</code></dt>
           <dd>Search directories recursively.</dd>
@@ -117,12 +142,15 @@
           <dd>Output a zero byte (ASCII NUL) instead of the usual newline after each match.</dd>
 
           <dt><code>-j</code> <var>JOBS</var>, <code>--jobs</code> <var>JOBS</var></dt>
-          <dd>Number of parallel search jobs/processes (default is 1). Use 0 to auto-detect available CPU cores.</dd>
+          <dd>Number of parallel search jobs/processes (default is all available CPU cores). Use 0 to auto-detect available CPU cores.</dd>
 
-          <dt><code>--row</code></dt>
+          <dt><code>-p</code>, <code>--progress</code></dt>
+          <dd>Display a progress bar on standard error while files are being searched. The progress bar is not part of the search output and is cleared once the search completes.</dd>
+
+          <dt><code>-R</code>, <code>--row</code></dt>
           <dd>Search rows and print matching rows. This is the default search mode.</dd>
 
-          <dt><code>--column</code></dt>
+          <dt><code>-C</code>, <code>--column</code></dt>
           <dd>Search columns and print whole matching columns vertically.</dd>
         </dl>
       </section>
@@ -152,7 +180,10 @@
         <pre><code>xlsxgrep -c -H -r -j 4 "(?i)foo|bar" /folder</code></pre>
 
         <p>Search columns and print matching columns vertically:</p>
-        <pre><code>xlsxgrep --column "error" report.xlsx</code></pre>
+        <pre><code>xlsxgrep -C "error" report.xlsx</code></pre>
+
+        <p>Show a progress bar while recursively searching a large folder:</p>
+        <pre><code>xlsxgrep -p -r "error" /folder</code></pre>
       </section>
 
       <section class="gh-man-section" id="exit-status">
