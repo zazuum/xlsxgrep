@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VQNH7RL9F0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-VQNH7RL9F0');
+  </script>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Download xlsxgrep releases for Windows, macOS, and Linux.">
+  <title>xlsxgrep | Releases</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="theme.js"></script>
+  <script src="sheet-grid.js" defer></script>
+</head>
+<body>
+  <div class="gh-sheet-chrome" aria-hidden="true">
+    <div class="gh-sheet-corner"></div>
+    <div class="gh-sheet-col-headers" id="sheet-col-headers"></div>
+    <div class="gh-sheet-row-headers" id="sheet-row-headers"></div>
+  </div>
+  <header class="gh-header">
+    <div class="gh-header-inner">
+      <nav class="gh-nav gh-nav-man" aria-label="Global">
+        <a href="https://www.zazuum.org">zazuum.org</a>
+        <a href="index.html">xlsxgrep</a>
+      </nav>
+
+      <div class="gh-header-actions">
+        <select id="theme-select" class="gh-theme-select" aria-label="Select color theme">
+          <option value="light">Light theme</option>
+          <option value="default">Default theme</option>
+          <option value="dark">Dark theme</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main class="gh-repo-page">
+    <div class="gh-repo-header">
+      <div class="gh-repo-header-main">
+        <nav class="gh-sitemap" aria-label="Site pages">
+          <span class="gh-sitemap-label">Pages:</span>
+          <a href="index.html">Home</a>
+          <a href="manual.html">Manual</a>
+          <a href="xlsxgrep_as_a_module.html">Module Guide</a>
+          <a href="releases.html" class="is-active" aria-current="page">Releases</a>
+        </nav>
+      </div>
+      <div class="gh-repo-header-actions">
+        <a class="gh-btn gh-btn-outline" href="https://github.com/zazuum/xlsxgrep" target="_blank" rel="noopener noreferrer">Source Code</a>
+        <a class="gh-btn gh-btn-primary" href="https://pypi.org/project/xlsxgrep/" target="_blank" rel="noopener noreferrer">Install on PyPI</a>
+      </div>
+    </div>
+
+    <article class="gh-readme">
+      <h1>xlsxgrep releases</h1>
+      <p class="gh-readme-lead">
+        Choose the package for your platform: standalone installers, portable archives, or Linux packages.
+        Release files are loaded directly from the xlsxgrep GitHub repository. You can also install xlsxgrep
+        via <code>pip install xlsxgrep</code> without downloading anything below.
+      </p>
+
+      <div id="release-status" class="gh-release-status">Loading releases...</div>
+      <section id="release-list" class="gh-release-list" aria-live="polite"></section>
+    </article>
+  </main>
+
+  <footer class="gh-footer">
+    <div class="gh-footer-inner">
+      <span>&copy; Ivan Cvitic</span>
+      <span class="gh-footer-sep">&middot;</span>
+      <a href="https://www.zazuum.org">www.zazuum.org</a>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var apiUrl = "https://api.github.com/repos/zazuum/xlsxgrep/releases";
+      var list = document.getElementById("release-list");
+      var status = document.getElementById("release-status");
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>'"]/g, function (character) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character];
+        });
+      }
+
+      function assetPlatform(asset) {
+        var name = asset.name.toLowerCase();
+        if (name.indexOf(".deb") !== -1) return { key: "debian", label: "Debian / Ubuntu", icon: "DEB" };
+        if (name.indexOf(".rpm") !== -1) return { key: "fedora", label: "Fedora / Red Hat / SUSE", icon: "RPM" };
+        if (name.indexOf(".pkg.tar") !== -1) return { key: "arch", label: "Arch Linux", icon: "ARCH" };
+        if (name.indexOf("windows") !== -1 || name.indexOf(".exe") !== -1) return { key: "windows", label: "Windows", icon: "WIN" };
+        if (name.indexOf("macos") !== -1 || name.indexOf(".pkg") !== -1) return { key: "macos", label: "macOS", icon: "MAC" };
+        if (name.indexOf("linux") !== -1 || name.indexOf(".tar.gz") !== -1) return { key: "linux", label: "Linux (portable)", icon: "BIN" };
+        return { key: "other", label: "Other files", icon: "FILE" };
+      }
+
+      function renderAsset(asset) {
+        return '<article class="gh-asset"><span class="gh-asset-name">' + escapeHtml(asset.name) +
+          '</span><a class="gh-asset-download" href="' + escapeHtml(asset.browser_download_url) + '">Download</a></article>';
+      }
+
+      function renderRelease(release) {
+        var assets = release.assets || [];
+        var groups = {};
+        assets.forEach(function (asset) {
+          var platform = assetPlatform(asset);
+          if (!groups[platform.key]) groups[platform.key] = { platform: platform, assets: [] };
+          groups[platform.key].assets.push(asset);
+        });
+        var assetMarkup = Object.keys(groups).map(function (key) {
+          var group = groups[key];
+          return '<section class="gh-platform-group"><h3 class="gh-platform-heading"><span class="gh-platform-icon">' +
+            group.platform.icon + '</span>' + group.platform.label + '</h3><div class="gh-asset-grid">' +
+            group.assets.map(renderAsset).join("") + '</div></section>';
+        }).join("");
+        if (!assetMarkup) assetMarkup = '<p class="gh-release-empty">No files are attached to this release.</p>';
+        var date = release.published_at ? new Date(release.published_at).toLocaleDateString() : "";
+        return '<article class="gh-release"><div class="gh-release-head"><div><h2>' +
+          escapeHtml(release.name || release.tag_name) + '</h2><span class="gh-release-date">' + escapeHtml(date) +
+          '</span></div><a class="gh-release-link" href="' + escapeHtml(release.html_url) +
+          '">View release notes</a></div><div class="gh-platform-grid">' + assetMarkup + '</div></article>';
+      }
+
+      fetch(apiUrl, { headers: { "Accept": "application/vnd.github+json" } })
+        .then(function (response) { return response.ok ? response.json() : Promise.reject(response.status); })
+        .then(function (releases) {
+          if (!releases.length) {
+            status.textContent = "No releases published yet.";
+            return;
+          }
+          status.textContent = releases.length + " release" + (releases.length === 1 ? "" : "s") + " available";
+          list.innerHTML = releases.map(renderRelease).join("");
+        })
+        .catch(function () {
+          status.textContent = "Could not load releases.";
+          status.className = "gh-release-status error";
+          list.innerHTML = '<p class="gh-release-empty">Visit the <a href="https://github.com/zazuum/xlsxgrep/releases">GitHub releases page</a> to download files.</p>';
+        });
+    })();
+  </script>
+</body>
+</html>
