@@ -952,6 +952,7 @@ For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
 
     def File_And_Path_Location():
         File_List = []
+        unsupported = []
         fileTypes = (
             ".xls",
             ".XLS",
@@ -988,6 +989,7 @@ For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
                 # perform file check
                 print("Error:   Unsupported file format: ",
                       Path(i), file=sys.stderr)
+                unsupported.append(str(Path(i)))
 
         opts = {
             "PATTERN": args.PATTERN,
@@ -1014,6 +1016,9 @@ For more details and options, see xlsxgrep(1) or run 'man xlsxgrep'.
         }
 
         SEARCH(File_List, opts)
+
+        if unsupported:
+            sys.exit(1)
 
     File_And_Path_Location()
 
